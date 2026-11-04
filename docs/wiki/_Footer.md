@@ -1,1 +1,0 @@
-Kltyton Bedrock Runtime 0.4.0 · [Source](https://github.com/kltyton/KltytonBedrockRuntime) · [Issues](https://github.com/kltyton/KltytonBedrockRuntime/issues) · [LGPL-3.0-only](https://github.com/kltyton/KltytonBedrockRuntime/blob/main/LICENSE)
