@@ -90,19 +90,13 @@ build/resources/developmentExamples 下的资源输出；将改动同步到该�
 并重建。资源图不会自动推进时间轴，也不会自动派发时间/事件回调；时间仍由现有动画采样路径提供。
 其他六个视觉场景继续使用 Java API 图。
 
-五、当前遥测的准确范围
-当前 ExampleTelemetry 只统计：
+五、参数捕获计数
+ExampleTelemetry 统计参数捕获的调用频率：
   - GraphAnimatable.captureGraphParameters 回调调用次数；
   - 每个场景的这些回调次数。
-它不统计、也不代表：
-  - 完整 render pass 或 draw call 数；
-  - CPU 使用率或 CPU 采样分布；
-  - 堆分配量或分配速率；
-  - 帧时间 frametime 分布；
-  - GPU 时间。
-日志字段仅表示上述回调计数：
+日志格式：
   Development example graph captures <回调总数> (<场景=回调次数> ...)
-它不是 benchmark，不得当作 CPU、分配或帧时间结果。
+渲染调用、CPU、分配和帧时间数据由对应渲染计数器或性能分析工具采集，方法见下一节。
 
 六、手动性能采集（不自动运行）
 示例不会在 runClient 时自动启动任何 profiling。需要时手动执行以下步骤。

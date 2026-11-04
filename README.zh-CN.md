@@ -1,6 +1,6 @@
 # Kltyton Bedrock Runtime
 
-<p align="center"><img src="icon.png" alt="Kltyton Bedrock Runtime" width="160"></p>
+<p align="center"><img src="publishing/curseforge/assets/icon.png" alt="Kltyton Bedrock Runtime" width="160"></p>
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
@@ -255,6 +255,7 @@ Bedrock 粒子模拟、Molang 求值和模型粒子渲染都在客户端进行�
 
 ## 文档
 
+- [中文 Wiki](https://github.com/kltyton/KltytonBedrockRuntime/wiki/Home.zh-CN) · [English Wiki](https://github.com/kltyton/KltytonBedrockRuntime/wiki)
 - [动画、模型、粒子与扩展行为](docs/animation/extensions.md)
 - [动画、模型、粒子与来源依赖](docs/dependencies/animation-models.md)
 - [注册、同步与事件](docs/server_sync_api.md)

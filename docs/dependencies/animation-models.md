@@ -94,7 +94,7 @@ The `geometry` descriptor variant resolves its `model_id` path to the normal mod
 
 The implementation uses host/runtime APIs rather than vendored copies:
 
-- JOML from the host dependency graph for matrices, vectors, and quaternions. `PoseBlender` uses host JOML nlerp; the shortest-path `q`/`-q` behavior was source-verified against JOML 1.10.5.
+- JOML from the host dependency graph for matrices, vectors, and quaternions. `PoseBlender` uses host JOML nlerp with shortest-path quaternion handling.
 - Gson for graph JSON and model metadata parsing.
 - On 1.20.1, GeckoLib's existing `mclib:20` runtime is also declared `compileOnly` for its exposed keyframe and MoLang value types; no additional copy is packaged.
 - Minecraft `VertexConsumer`, `PoseStack`, bounds, and resource types.

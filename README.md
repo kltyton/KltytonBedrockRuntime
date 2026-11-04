@@ -1,6 +1,6 @@
 # Kltyton Bedrock Runtime
 
-<p align="center"><img src="icon.png" alt="Kltyton Bedrock Runtime" width="160"></p>
+<p align="center"><img src="publishing/curseforge/assets/icon.png" alt="Kltyton Bedrock Runtime" width="160"></p>
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
@@ -255,6 +255,7 @@ Bedrock particle simulation, Molang evaluation and model-particle rendering are 
 
 ## Documentation
 
+- [English Wiki](https://github.com/kltyton/KltytonBedrockRuntime/wiki) · [中文 Wiki](https://github.com/kltyton/KltytonBedrockRuntime/wiki/Home.zh-CN)
 - [Animation, model, particle, and extension behavior](docs/animation/extensions.md)
 - [Animation, model, particle, and source dependencies](docs/dependencies/animation-models.md)
 - [Registration, synchronization and events](docs/server_sync_api.md)
