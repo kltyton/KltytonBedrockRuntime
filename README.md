@@ -41,9 +41,19 @@ The [version and Maven coordinate guide](docs/versions/README.md) lists all eigh
 
 ## Maven coordinates
 
-Version `0.4.0` is the current build version under `com.kltyton`. The common API module is `kltyton_bedrock_runtime-common-<minecraft>`; each loader module is `kltyton_bedrock_runtime-<loader>-<minecraft>`. The loader artifact is the runtime mod JAR, while the common artifact supplies compile-time API types. These are build coordinates for locally produced artifacts; remote publication is not asserted:
+Version `0.4.0` uses the `com.kltyton` Maven group. The common API module is `kltyton_bedrock_runtime-common-<minecraft>`; each loader module is `kltyton_bedrock_runtime-<loader>-<minecraft>`. The loader artifact is the runtime mod JAR, while the common artifact supplies compile-time API types. For NeoForge 26.2:
 
 ```groovy
+repositories {
+    maven {
+        url = 'https://maven.sighs.cc/repository/maven-public/'
+        content {
+            includeModule 'com.kltyton', 'kltyton_bedrock_runtime-common-26.2'
+            includeModule 'com.kltyton', 'kltyton_bedrock_runtime-neoforge-26.2'
+        }
+    }
+}
+
 dependencies {
     compileOnly 'com.kltyton:kltyton_bedrock_runtime-common-26.2:0.4.0'
     runtimeOnly 'com.kltyton:kltyton_bedrock_runtime-neoforge-26.2:0.4.0'

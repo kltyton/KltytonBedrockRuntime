@@ -41,9 +41,19 @@
 
 ## Maven 坐标
 
-0.4.0 是 `com.kltyton` 组下的当前构建版本。公共 API 模块为 `kltyton_bedrock_runtime-common-<minecraft>`；各加载器模块为 `kltyton_bedrock_runtime-<loader>-<minecraft>`。加载器产物是运行时模组 JAR，common 产物提供编译期 API 类型。下列坐标对应本地构建产物，不声明远程仓库可用性：
+0.4.0 使用 `com.kltyton` Maven 组。公共 API 模块为 `kltyton_bedrock_runtime-common-<minecraft>`；各加载器模块为 `kltyton_bedrock_runtime-<loader>-<minecraft>`。加载器产物是运行时模组 JAR，common 产物提供编译期 API 类型。以 NeoForge 26.2 为例：
 
 ```groovy
+repositories {
+    maven {
+        url = 'https://maven.sighs.cc/repository/maven-public/'
+        content {
+            includeModule 'com.kltyton', 'kltyton_bedrock_runtime-common-26.2'
+            includeModule 'com.kltyton', 'kltyton_bedrock_runtime-neoforge-26.2'
+        }
+    }
+}
+
 dependencies {
     compileOnly 'com.kltyton:kltyton_bedrock_runtime-common-26.2:0.4.0'
     runtimeOnly 'com.kltyton:kltyton_bedrock_runtime-neoforge-26.2:0.4.0'
