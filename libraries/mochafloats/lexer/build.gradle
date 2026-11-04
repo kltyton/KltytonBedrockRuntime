@@ -1,0 +1,4 @@
+ext.mochafloatsArtifact = 'lexer'
+ext.mochafloatsRoot = file('..')
+
+apply from: file('../mochafloats-module.gradle')

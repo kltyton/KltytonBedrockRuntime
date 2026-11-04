@@ -23,4 +23,4 @@ temp/
 /publishing/releases/
 .temple/
 bin/
-**/common/src/generated/resources/data/bonehitboxlib/block_shapes/vanilla.json
+**/common/src/generated/resources/data/kltyton_bedrock_runtime/block_shapes/vanilla.json

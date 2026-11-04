@@ -1,0 +1,18 @@
+mochafloats 6.1.1
+Copyright (c) 2021-2025 Unnamed Team
+
+Upstream project: https://github.com/PlayerAnimationLibrary/mochafloats
+Source baseline: dcccb30261b5c06e4958c8566f13300032dfbec5
+Upstream Maven version: 6.1.1
+Derived integration version: 6.1.1-kbr.1
+
+The lexer, parser and runtime are rebuilt for Java 17 from pinned source artifacts.
+The original MIT notices are retained; the upstream source packages are relocated
+into KBR's isolated internal package for the derived build.
+KBR patches add resource-version parsing rules, numeric operators and an opt-in
+contextual evaluation path for particle bindings and structured control flow.
+The bytecode compiler is not included. Minecraft supplies Netty at runtime.
+
+Unmodified upstream code is MIT-licensed; see LICENSE-mochafloats.txt.
+KBR integration additions and patches are LGPL-3.0-only; see LICENSE-KBR-LGPL-3.0.txt
+and COPYING-KBR-GPL-3.0.txt.

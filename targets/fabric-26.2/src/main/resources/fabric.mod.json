@@ -9,25 +9,25 @@
     ],
     "license": "${license}",
     "environment": "*",
+    "accessWidener": "kltyton_bedrock_runtime.accesswidener",
     "entrypoints": {
         "main": [
-            "com.kltyton.bonehitboxlib.BoneHitboxLib"
+            "com.kltyton.bedrockruntime.KltytonBedrockRuntime"
         ],
         "client": [
-            "com.kltyton.bonehitboxlib.client.BoneHitboxLibFabricClient"
+            "com.kltyton.bedrockruntime.client.KltytonBedrockRuntimeFabricClient"
         ]
     },
     "mixins": [
-        "${mod_id}.mixins.json"
+        "${mod_id}.mixins.json",
+        "${mod_id}.model.mixins.json"
     ],
     "depends": {
         "fabricloader": ">=${fabric_loader_version}",
         "fabric-api": "*",
         "fabric-key-mapping-api-v1": "*",
         "minecraft": "${fabric_minecraft_version_range}",
-        "java": ">=${java_version}"
-    },
-    "suggests": {
-        "geckolib": ">=${geckolib_version}"
+        "java": ">=${java_version}",
+        "geckolib": "=${geckolib_version}"
     }
 }

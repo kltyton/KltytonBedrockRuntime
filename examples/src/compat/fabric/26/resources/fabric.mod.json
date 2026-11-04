@@ -1,0 +1,31 @@
+{
+    "schemaVersion": 1,
+    "id": "kltyton_bedrock_runtime_examples",
+    "version": "${version}",
+    "name": "Kltyton Bedrock Runtime Development Examples",
+    "description": "Development-only animation graph scenarios. Not included in release JARs.",
+    "authors": [
+        "${mod_authors}"
+    ],
+    "license": "${mod_license}",
+    "environment": "*",
+    "entrypoints": {
+        "main": [
+            "com.kltyton.bedrockruntime.examples.client.ExampleFabricCommon"
+        ],
+        "client": [
+            "com.kltyton.bedrockruntime.examples.client.ExampleFabricClient"
+        ]
+    },
+    "mixins": [
+        "kltyton_bedrock_runtime_examples.mixins.json"
+    ],
+    "depends": {
+        "fabricloader": ">=${loader_version}",
+        "fabric-api": "*",
+        "minecraft": "${minecraft_version_range}",
+        "java": ">=${java_version}",
+        "geckolib": ">=${geckolib_version}",
+        "kltyton_bedrock_runtime": "*"
+    }
+}

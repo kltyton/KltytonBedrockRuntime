@@ -11,14 +11,15 @@
     "environment": "*",
     "entrypoints": {
         "main": [
-            "com.kltyton.bonehitboxlib.BoneHitboxLib"
+            "com.kltyton.bedrockruntime.KltytonBedrockRuntime"
         ],
         "client": [
-            "com.kltyton.bonehitboxlib.client.BoneHitboxLibFabricClient"
+            "com.kltyton.bedrockruntime.client.KltytonBedrockRuntimeFabricClient"
         ]
     },
     "mixins": [
-        "${mod_id}.mixins.json"
+        "${mod_id}.mixins.json",
+        "${mod_id}.model.mixins.json"
     ],
     "depends": {
         "fabricloader": ">=${fabric_loader_version}",
@@ -26,10 +27,8 @@
         "fabric-key-binding-api-v1": "*",
         "minecraft": "${fabric_minecraft_version_range}",
         "java": ">=${java_version}",
-        "forgeconfigapiport": ">=${forge_config_api_port_version}"
+        "forgeconfigapiport": ">=${forge_config_api_port_version}",
+        "geckolib": "=${geckolib_version}"
     },
-    "suggests": {
-        "geckolib": ">=${geckolib_version}"
-    },
-    "accessWidener": "bonehitboxlib.accesswidener"
+    "accessWidener": "kltyton_bedrock_runtime.accesswidener"
 }

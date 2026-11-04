@@ -11,7 +11,7 @@ def generateVanillaBlockShapes = tasks.register('generateVanillaBlockShapes') {
     description = 'Extracts packaged vanilla block model geometry for both logical sides.'
     dependsOn 'createMinecraftArtifacts'
     inputs.file(minecraftArtifact)
-    outputs.file(generatedShapes.file('data/bonehitboxlib/block_shapes/vanilla.json'))
+    outputs.file(generatedShapes.file('data/kltyton_bedrock_runtime/block_shapes/vanilla.json'))
     doLast {
         def parser = new JsonSlurper()
         def models = [:]
@@ -49,7 +49,7 @@ def generateVanillaBlockShapes = tasks.register('generateVanillaBlockShapes') {
             }
         }
         if (selectedStates.isEmpty()) { throw new GradleException('No vanilla block models were extracted') }
-        def output = generatedShapes.file('data/bonehitboxlib/block_shapes/vanilla.json').asFile
+        def output = generatedShapes.file('data/kltyton_bedrock_runtime/block_shapes/vanilla.json').asFile
         output.parentFile.mkdirs()
         output.setText(JsonOutput.toJson([minecraft: minecraft_version, states: selectedStates, models: selectedModels]) + '\n', 'UTF-8')
         logger.lifecycle("Generated block model geometry: ${selectedStates.size()} blocks, ${selectedModels.size()} models")

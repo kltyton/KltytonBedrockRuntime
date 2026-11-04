@@ -1,0 +1,11 @@
+ext.mochafloatsArtifact = 'runtime'
+ext.mochafloatsRoot = file('..')
+
+apply from: file('../mochafloats-module.gradle')
+
+dependencies {
+    api project(':mochafloatsParser')
+
+    // The parser AST exposes Netty ByteBuf in its public signatures; keep it compile-time only.
+    compileOnly 'io.netty:netty-buffer:4.1.82.Final'
+}

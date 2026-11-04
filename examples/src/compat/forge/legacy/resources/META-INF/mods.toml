@@ -1,0 +1,38 @@
+modLoader = "javafml"
+loaderVersion = "${forge_loader_version_range}"
+license = "${mod_license}"
+
+[[mods]]
+modId = "kltyton_bedrock_runtime_examples"
+version = "${version}"
+displayName = "Kltyton Bedrock Runtime Development Examples"
+authors = "${mod_authors}"
+description = '''Development-only animation graph scenarios. Not included in release JARs.'''
+
+[[dependencies.kltyton_bedrock_runtime_examples]]
+modId = "forge"
+mandatory = true
+versionRange = "[${forge_version},)"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.kltyton_bedrock_runtime_examples]]
+modId = "minecraft"
+mandatory = true
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.kltyton_bedrock_runtime_examples]]
+modId = "geckolib"
+mandatory = true
+versionRange = "[${geckolib_version},)"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.kltyton_bedrock_runtime_examples]]
+modId = "kltyton_bedrock_runtime"
+mandatory = true
+versionRange = "[${version},)"
+ordering = "NONE"
+side = "BOTH"

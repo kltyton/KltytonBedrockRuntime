@@ -4,6 +4,8 @@ license = "${license}" # Review your options at https://choosealicense.com/.
 #issueTrackerURL="https://change.me.to.your.issue.tracker.example.invalid/" #optional
 [[mixins]]
 config = "${mod_id}.mixins.json"
+[[mixins]]
+config = "${mod_id}.model.mixins.json"
 [[mods]] #mandatory
 modId = "${mod_id}" #mandatory
 version = "${version}" #mandatory
@@ -27,7 +29,7 @@ ordering = "NONE"
 side = "BOTH"
 [[dependencies.${mod_id}]]
 modId = "geckolib"
-type="optional"
-versionRange = "[${geckolib_version},)"
+type="required"
+versionRange = "[${geckolib_version}]"
 ordering = "NONE"
 side = "BOTH"

@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.kltyton.bedrockruntime.client.particle.model.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "kltyton_bedrock_runtime.refmap.json",
+  "client": [
+    "ModelParticleRenderBatchMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

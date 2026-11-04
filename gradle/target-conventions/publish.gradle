@@ -123,13 +123,16 @@ tasks.named('publishMods') {
         }
     }
 }
-ext.configureBoneHitboxPom = { pom, boolean commonApi ->
+ext.configureBedrockRuntimePom = { pom, boolean commonApi ->
     pom.name = mod_name
     pom.description = mod_description
-    pom.url = 'https://github.com/kltyton/BoneHitboxLib'
+    pom.url = 'https://github.com/kltyton/KltytonBedrockRuntime'
     pom.licenses { license { name = 'LGPL-3.0-only'; url = 'https://www.gnu.org/licenses/lgpl-3.0.html' } }
     pom.withXml {
-        def dependencies = asNode().appendNode('dependencies')
+        def dependencies = asNode().dependencies ? asNode().dependencies[0] : asNode().appendNode('dependencies')
+        dependencies.children().removeAll { child ->
+            child.name() == 'dependency' && child.groupId?.text() == 'com.kltyton.bedrockruntime.internal.mochafloats'
+        }
         def modern = (java_version as int) >= 25
         def gecko = dependencies.appendNode('dependency')
         gecko.appendNode('groupId', modern ? 'com.geckolib' : 'software.bernie.geckolib')
@@ -137,7 +140,6 @@ ext.configureBoneHitboxPom = { pom, boolean commonApi ->
         gecko.appendNode('artifactId', "geckolib-${geckoLoader}-${minecraft_version}")
         gecko.appendNode('version', geckolib_version)
         gecko.appendNode('scope', 'compile')
-        gecko.appendNode('optional', 'true')
         if (commonApi || loader != 'forge') {
             def config = dependencies.appendNode('dependency')
             config.appendNode('groupId', 'fuzs.forgeconfigapiport')
@@ -158,7 +160,7 @@ publishing {
             groupId = project.group.toString()
             artifactId = base.archivesName.get()
             version = project.version.toString()
-            pom { configureBoneHitboxPom(delegate, false) }
+            pom { configureBedrockRuntimePom(delegate, false) }
         }
         if (loader != 'fabric') {
             commonApi(MavenPublication) {
@@ -167,7 +169,7 @@ publishing {
                 groupId = project.group.toString()
                 artifactId = "${mod_id}-common-${minecraft_version}"
                 version = project.version.toString()
-                pom { configureBoneHitboxPom(delegate, true) }
+                pom { configureBedrockRuntimePom(delegate, true) }
             }
         }
     }

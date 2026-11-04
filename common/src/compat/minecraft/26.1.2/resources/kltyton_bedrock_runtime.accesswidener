@@ -1,0 +1,4 @@
+classTweaker v1 official
+
+# SpellColorQuery's invoker uses the protected enum in its native method descriptor.
+accessible class net/minecraft/world/entity/monster/illager/SpellcasterIllager$IllagerSpell

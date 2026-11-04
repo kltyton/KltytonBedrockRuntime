@@ -43,7 +43,7 @@ generator.addProvider(includeClient, new AutoShapeDataProvider(output, automatic
 
 ## 全局模型几何配置
 
-服务端配置文件为 `bonehitboxlib-server.toml`，由 Loader 同步到客户端。当前 Fabric 和 NeoForge 开发运行目录生成在 `config/`；1.20.1 Forge 生成在 `saves/<世界>/serverconfig/`。部署时编辑所属 Loader 实际生成的文件，保留其他配置项。
+服务端配置文件为 `kltyton_bedrock_runtime-server.toml`，由 Loader 同步到客户端。当前 Fabric 和 NeoForge 开发运行目录生成在 `config/`；1.20.1 Forge 生成在 `saves/<世界>/serverconfig/`。部署时编辑所属 Loader 实际生成的文件，保留其他配置项。
 
 ```toml
 vanillaSlantedBlockObb = true
@@ -67,7 +67,7 @@ blockModelBlacklist = ["minecraft:chest", "minecraft:trapped_chest"]
 
 白名单只限制范围，不会自行开启任何模式。黑白名单同时约束本库 API 提供的模型 OBB：被排除的模型 OBB 回退为模型 AABB，其他原生形状保持原样。自动多格方块保留各占位格裁切和放置范围；名单允许时，强制模式使用原始模型 OBB，否则采用注册时指定的 AABB/OBB 模式。关闭两个开关并清空名单可恢复方块原有形状及接入方指定模式。
 
-目标任务 `generateVanillaBlockShapes` 从已解析的 Minecraft 资源提取全部原版 blockstate 与模型元素，生成 `common/build/<loader>-<minecraft>/generated/resources/vanilla-models/data/bonehitboxlib/block_shapes/vanilla.json`，并由对应目标的 common 资源源集加载。模组模型在注册完成后预处理，沿用模型父级、旋转、rescale、加权 variants、multipart 和位置种子。查询只读取预编译形状与当前配置，不在碰撞或渲染时读取模型文件。
+目标任务 `generateVanillaBlockShapes` 从已解析的 Minecraft 资源提取全部原版 blockstate 与模型元素，生成 `common/build/<loader>-<minecraft>/generated/resources/vanilla-models/data/kltyton_bedrock_runtime/block_shapes/vanilla.json`，并由对应目标的 common 资源源集加载。模组模型在注册完成后预处理，沿用模型父级、旋转、rescale、加权 variants、multipart 和位置种子。查询只读取预编译形状与当前配置，不在碰撞或渲染时读取模型文件。
 
 客户端资源包、运行时特殊渲染器和 Gecko 动画不改变这份服务端物理几何。动态或特殊方块、第三方形状覆盖、配置热重载和多人同步效果不由此处的模型几何定义。
 

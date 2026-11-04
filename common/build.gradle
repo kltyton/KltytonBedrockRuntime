@@ -22,8 +22,14 @@ java {
 }
 apply from: new File(templeRoot, 'gradle/target-conventions/repositories.gradle')
 dependencies {
+    implementation project(':mochafloatsRuntime')
+    compileOnly 'org.jspecify:jspecify:1.0.0'
     compileOnly 'net.fabricmc:sponge-mixin:0.17.3+mixin.0.8.7'
     compileOnly 'io.github.llamalad7:mixinextras-common:0.5.0'
+    if (minecraft == '1.20.1') {
+        // GeckoLib 4.8.4 exposes mclib types but publishes this dependency as runtime-only.
+        compileOnly 'com.eliotlash.mclib:mclib:20'
+    }
     def configApi = minecraft == '1.20.1' ? 'forgeconfigapiport-common' : 'forgeconfigapiport-common-neoforgeapi'
     compileOnly "fuzs.forgeconfigapiport:${configApi}:${rootProject.property('forge_config_api_port_version')}"
 }
@@ -91,13 +97,13 @@ ext.templeSourceDirectories = javaDirectories + [constants]
 apply from: new File(templeRoot, 'gradle/target-conventions/ide-sources.gradle')
 
 // Loader entrypoints are merged into the installable mod, but not the common compile API.
-def platformClasses = ['com/kltyton/bonehitboxlib/BoneHitboxLib.class',
-                       'com/kltyton/bonehitboxlib/BoneHitboxLib$*.class',
-                       'com/kltyton/bonehitboxlib/BoneHitboxLib.java',
-                       'com/kltyton/bonehitboxlib/client/BoneHitboxLib*',
-                       'com/kltyton/bonehitboxlib/client/compat/geckolib/BoneHitboxLib*',
-                       'com/kltyton/bonehitboxlib/event/BoneHitboxLib*',
-                       'com/kltyton/bonehitboxlib/network/BoneHitboxLib*']
+def platformClasses = ['com/kltyton/bedrockruntime/KltytonBedrockRuntime.class',
+                       'com/kltyton/bedrockruntime/KltytonBedrockRuntime$*.class',
+                       'com/kltyton/bedrockruntime/KltytonBedrockRuntime.java',
+                       'com/kltyton/bedrockruntime/client/KltytonBedrockRuntime*',
+                       'com/kltyton/bedrockruntime/client/compat/geckolib/KltytonBedrockRuntime*',
+                       'com/kltyton/bedrockruntime/event/KltytonBedrockRuntime*',
+                       'com/kltyton/bedrockruntime/network/KltytonBedrockRuntime*']
 tasks.named('jar', Jar) { exclude platformClasses }
 tasks.named('sourcesJar', Jar) { exclude platformClasses }
 tasks.withType(Jar).configureEach {

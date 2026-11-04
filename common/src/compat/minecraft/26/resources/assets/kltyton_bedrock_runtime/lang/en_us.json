@@ -1,0 +1,8 @@
+{
+    "key.category.kltyton_bedrock_runtime.kltyton_bedrock_runtime": "KltytonBedrockRuntime",
+    "key.kltyton_bedrock_runtime.hold_obb": "Show OBB Part",
+    "commands.kltyton_bedrock_runtime.particle.failed": "No players were selected for the particle request.",
+    "commands.kltyton_bedrock_runtime.particle.add": "Requested particle effect %s.",
+    "commands.kltyton_bedrock_runtime.particle.not_found": "Particle emitter %s was not found.",
+    "commands.kltyton_bedrock_runtime.particle.remove": "Removed particle emitter %s."
+}

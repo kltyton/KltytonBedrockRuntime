@@ -1,0 +1,41 @@
+modLoader = "javafml"
+loaderVersion = "${fml_version_range}"
+license = "${mod_license}"
+
+[[mixins]]
+config = "kltyton_bedrock_runtime_examples.mixins.json"
+
+[[mods]]
+modId = "kltyton_bedrock_runtime_examples"
+version = "${version}"
+displayName = "Kltyton Bedrock Runtime Development Examples"
+authors = "${mod_authors}"
+description = '''Development-only animation graph scenarios. Not included in release JARs.'''
+
+[[dependencies.kltyton_bedrock_runtime_examples]]
+modId = "neoforge"
+type = "required"
+versionRange = "[${neoforge_version},)"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.kltyton_bedrock_runtime_examples]]
+modId = "minecraft"
+type = "required"
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.kltyton_bedrock_runtime_examples]]
+modId = "geckolib"
+type = "required"
+versionRange = "[${geckolib_version},)"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.kltyton_bedrock_runtime_examples]]
+modId = "kltyton_bedrock_runtime"
+type = "required"
+versionRange = "[${version},)"
+ordering = "NONE"
+side = "BOTH"

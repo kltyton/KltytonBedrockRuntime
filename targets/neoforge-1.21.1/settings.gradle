@@ -22,3 +22,8 @@ project(':common').buildFileName = active ? 'build.gradle' : '../../../build.gra
 
 include ":vanillaModels"
 project(":vanillaModels").projectDir = file("../../gradle/vanilla-models")
+
+include ':mochafloatsLexer', ':mochafloatsParser', ':mochafloatsRuntime'
+project(':mochafloatsLexer').projectDir = file('../../libraries/mochafloats/lexer')
+project(':mochafloatsParser').projectDir = file('../../libraries/mochafloats/parser')
+project(':mochafloatsRuntime').projectDir = file('../../libraries/mochafloats/runtime')

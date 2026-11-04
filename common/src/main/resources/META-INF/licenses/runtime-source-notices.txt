@@ -1,0 +1,31 @@
+Kltyton Bedrock Runtime - particle runtime source notices
+
+ParticleStorm 1.5.2
+Author: Westernat
+Source: https://github.com/westernat/ParticleStorm
+License: GNU Lesser General Public License version 3
+
+Particle effect definitions, emitter simulation, query bindings, resource-pack
+loading, attachment and rendering behavior are adapted into KBR's particle
+runtime and version layers. KBR uses the mochafloats parser and interpreter with
+particle-specific bindings. The particle authoring editor is not included.
+
+ThreeDimensionParticle 1.2.1
+Author: Westernat
+Source: https://github.com/westernat/ThreeDimensionParticle
+Forge source baseline: f9eab801e014a40c568cd4d37fde2aa9caa00fef
+NeoForge source baseline: 593269a462a7d060227fbb0dbd4c1651cb613e6c
+License: GNU Lesser General Public License version 3
+
+Model-particle appearance and model-frame selection are adapted to KBR's particle
+runtime, GeckoLib geometry and version-specific Minecraft rendering interfaces.
+
+mochafloats 6.1.1
+Source: https://github.com/PlayerAnimationLibrary/mochafloats
+Baseline: dcccb30261b5c06e4958c8566f13300032dfbec5
+Copyright (c) 2021-2025 Unnamed Team
+License: MIT for upstream source; KBR integration additions are LGPL-3.0-only.
+The source-built nested modules retain their own license and modification notices.
+
+The repository LICENSE and COPYING contain the LGPL-3.0 and GPL-3.0 texts.
+GeckoLib remains a separately installed host dependency with its original license.

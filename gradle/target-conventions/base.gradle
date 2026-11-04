@@ -73,6 +73,7 @@ tasks.named('jar', Jar) {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 tasks.withType(Jar).configureEach {
+    includeEmptyDirs = false
     from([new File(templeRoot, 'LICENSE'), new File(templeRoot, 'COPYING')]) {
         rename { name -> "${name}_${mod_id}" }
     }

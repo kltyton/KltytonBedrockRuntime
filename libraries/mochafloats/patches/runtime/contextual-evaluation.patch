@@ -1,0 +1,207 @@
+# Actor-aware host bindings, sparse values and structured control flow.
+artifact: runtime
+upstream: 6.1.1
+file: org/redlance/mocha/runtime/ExpressionInterpreter.java
+<<<<<<< SOURCE
+            (evaluator, a, b) -> { // arrow
+                final Value val = a.visit(evaluator);
+=======
+            (evaluator, a, b) -> { // arrow
+                final Value val = a.visit(evaluator);
+                if (evaluator.scope instanceof ContextualScope contextual) {
+                    final Object subject = contextual.reference(val, evaluator);
+                    return subject == null ? evaluator.present(null) : b.visit(evaluator.createChild(subject));
+                }
+>>>>>>> REPLACEMENT
+
+<<<<<<< SOURCE
+                final Value val = evaluator.valueIfPresent(a);
+                return val != null ? val : b.visit(evaluator);
+=======
+                if (evaluator.scope instanceof ContextualScope) {
+                    Value present;
+                    try {
+                        present = a.visit(evaluator);
+                    } catch (MissingValue missing) {
+                        present = null;
+                    }
+                    return present == null ? b.visit(evaluator) : present;
+                }
+                final Value val = evaluator.valueIfPresent(a);
+                return val != null ? val : b.visit(evaluator);
+>>>>>>> REPLACEMENT
+
+<<<<<<< SOURCE
+                final Value val = b.visit(evaluator);
+                // we can only assign
+=======
+                final Value val = b.visit(evaluator);
+                if (evaluator.scope instanceof ContextualScope contextual) {
+                    contextual.assign(a, val, evaluator);
+                    return val;
+                }
+                // we can only assign
+>>>>>>> REPLACEMENT
+
+<<<<<<< SOURCE
+    private final T entity;
+    private final Scope scope;
+=======
+    private final T entity;
+    private final Scope scope;
+    private static final class MissingValue extends RuntimeException {
+        static final MissingValue INSTANCE = new MissingValue();
+        private MissingValue() { super(null, null, false, false); }
+    }
+
+    private static final class Flow extends RuntimeException {
+        final StatementExpression.Op statement;
+        final Value value;
+        Flow(StatementExpression.Op statement, Value value) {
+            super(null, null, false, false);
+            this.statement = statement;
+            this.value = value;
+        }
+    }
+
+    private boolean truth(Value value) {
+        return scope instanceof ContextualScope contextual ? contextual.truth(value) : value.getAsBoolean();
+    }
+
+    private Value present(Value value) {
+        if (value != null && !(value instanceof JavaValue reference && reference.value() == null)) return value;
+        throw MissingValue.INSTANCE;
+    }
+
+    /** Evaluate one complete script; nested blocks and arrows share this return boundary. */
+    public Value evaluateScript(List<Expression> expressions, boolean complex) {
+        Value result = Value.nil();
+        try {
+            for (Expression expression : expressions) {
+                result = expression.visit(this);
+                if (!(scope instanceof ContextualScope)) {
+                    Value returned = popReturnValue();
+                    if (returned != null) return returned;
+                }
+            }
+            return complex ? Value.nil() : result;
+        } catch (Flow flow) {
+            return flow.value == null ? Value.nil() : flow.value;
+        } catch (MissingValue missing) {
+            return Value.nil();
+        }
+    }
+>>>>>>> REPLACEMENT
+
+<<<<<<< SOURCE
+            final int validIndex = Math.max(0, (int) index.getAsNumber()) % values.length;
+=======
+            if (values.length == 0) return scope instanceof ContextualScope ? present(null) : Value.nil();
+            final int validIndex = Math.max(0, (int) index.getAsNumber()) % values.length;
+>>>>>>> REPLACEMENT
+
+<<<<<<< SOURCE
+        final Value objectValue = expression.object().visit(this);
+        if (objectValue instanceof ObjectValue) {
+=======
+        final Value objectValue = expression.object().visit(this);
+        if (scope instanceof ContextualScope contextual) {
+            return present(contextual.access(objectValue, expression.property(), this, false));
+        }
+        if (objectValue instanceof ObjectValue) {
+>>>>>>> REPLACEMENT
+
+<<<<<<< SOURCE
+        final List<Expression> argumentsExpressions = expression.arguments();
+=======
+        if (scope instanceof ContextualScope contextual && expression.function() instanceof IdentifierExpression identifier) {
+            List<Expression> expressions = expression.arguments();
+            if ("loop".equals(identifier.name())) {
+                if (expressions.size() != 2) throw new IllegalArgumentException("loop requires count and body");
+                float remaining = expressions.get(0).visit(this).getAsNumber();
+                if (!Float.isFinite(remaining)) throw new IllegalArgumentException("Non-finite loop count");
+                remaining = Math.min(remaining, contextual.loopLimit());
+                while (remaining > 0) {
+                    try {
+                        expressions.get(1).visit(this);
+                    } catch (Flow flow) {
+                        if (flow.statement == StatementExpression.Op.BREAK) break;
+                        if (flow.statement != StatementExpression.Op.CONTINUE) throw flow;
+                    }
+                    float next = remaining - 1;
+                    if (next == remaining) throw new IllegalArgumentException("Loop count cannot decrease at float precision");
+                    remaining = next;
+                }
+                return Value.nil();
+            }
+            if ("for_each".equals(identifier.name())) {
+                if (expressions.size() != 3) throw new IllegalArgumentException("for_each requires variable, array and body");
+                Value array = expressions.get(1).visit(this);
+                if (!(array instanceof ArrayValue values)) return Value.nil();
+                for (Value value : values.values().clone()) {
+                    if (!contextual.canIterate(value)) continue;
+                    contextual.assign(expressions.get(0), value, this);
+                    try {
+                        expressions.get(2).visit(this);
+                    } catch (Flow flow) {
+                        if (flow.statement == StatementExpression.Op.BREAK) break;
+                        if (flow.statement != StatementExpression.Op.CONTINUE) throw flow;
+                    }
+                }
+                return Value.nil();
+            }
+        }
+        if (scope instanceof ContextualScope contextual) {
+            Value result = contextual.call(expression, this);
+            if (result != null) return present(result);
+        }
+        final List<Expression> argumentsExpressions = expression.arguments();
+>>>>>>> REPLACEMENT
+
+<<<<<<< SOURCE
+        final Value function = functionExpr.visit(this);
+=======
+        final Value function;
+        if (scope instanceof ContextualScope contextual && functionExpr instanceof AccessExpression access) {
+            function = present(contextual.access(access.object().visit(this), access.property(), this, true));
+        } else {
+            function = functionExpr.visit(this);
+        }
+>>>>>>> REPLACEMENT
+
+<<<<<<< SOURCE
+        List<Expression> expressions = executionScope.expressions();
+        return (Function<T>)
+=======
+        List<Expression> expressions = executionScope.expressions();
+        if (scope instanceof ContextualScope) {
+            for (Expression expression : expressions) expression.visit(this);
+            return Value.nil();
+        }
+        return (Function<T>)
+>>>>>>> REPLACEMENT
+
+<<<<<<< SOURCE
+        return scope.get(expression.name());
+=======
+        if (scope instanceof ContextualScope contextual) return present(contextual.resolve(expression.name(), this));
+        return scope.get(expression.name());
+>>>>>>> REPLACEMENT
+
+<<<<<<< SOURCE
+            case RETURN: {
+                this.returnValue = value;
+=======
+            case RETURN: {
+                if (scope instanceof ContextualScope) throw new Flow(null, value);
+                this.returnValue = value;
+>>>>>>> REPLACEMENT
+
+<<<<<<< SOURCE
+        switch (expression.op()) {
+            case BREAK: {
+=======
+        if (scope instanceof ContextualScope) throw new Flow(expression.op(), null);
+        switch (expression.op()) {
+            case BREAK: {
+>>>>>>> REPLACEMENT

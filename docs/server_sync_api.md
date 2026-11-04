@@ -2,13 +2,13 @@
 
 ## Required Opt-In / 强制接入
 
-EN: Only entities implementing `BoneHitboxEntity` can own BoneHitboxLib OBBs. The interface has no global enabled switch. Implementors must override `bonehitboxlib$registerObbBones` and register at least one selector.
+EN: Only entities implementing `BoneHitboxEntity` can own Kltyton Bedrock Runtime OBBs. The interface has no global enabled switch. Implementors must override `kltyton_bedrock_runtime$registerObbBones` and register at least one selector.
 
-CN：只有实现 `BoneHitboxEntity` 的实体才能拥有 BoneHitboxLib OBB。接口不再提供全局启用开关；实现者必须重写 `bonehitboxlib$registerObbBones` 并至少注册一个选择器。
+CN：只有实现 `BoneHitboxEntity` 的实体才能拥有 Kltyton Bedrock Runtime OBB。接口不再提供全局启用开关；实现者必须重写 `kltyton_bedrock_runtime$registerObbBones` 并至少注册一个选择器。
 
 ```java
 @Override
-public void bonehitboxlib$registerObbBones(ObbBoneRegistrar registrar) {
+public void kltyton_bedrock_runtime$registerObbBones(ObbBoneRegistrar registrar) {
     // CN: 六个普通 OBB；无需显式注册 HURT。EN: Six ordinary OBBs; HURT registration is not required.
     registrar.register(ObbBoneRegistrar.BASE);
 
@@ -46,12 +46,12 @@ CN：`ATTACK`、`HURT`、`COLLISION` 是可修改、可组合的 `ObbBoneAttribu
 - `SOFT`: push response / 推挤响应。
 - `HARD`: continuous local-player OBB movement clipping plus one persistent-manifold, zero-restitution impulse solve per server entity pair / 本地玩家连续 OBB 位移裁剪，加上服务端每个实体对一次持续接触流形、零恢复系数冲量求解。
 
-When either entity in a pair has opted into physical OBB collision, BoneHitboxLib cancels vanilla `Entity.push(Entity)` for that pair. This prevents the original AABB push from being added on top of `SOFT`/`HARD`. A permanently registered collision remains an OBB-physics opt-in when its discovered bones are temporarily disabled; disabling those bones produces no physical collision instead of silently restoring AABB pushing. / 当实体对中的任一方接入 OBB 物理碰撞时，BoneHitboxLib 会取消该实体对的原版 `Entity.push(Entity)`，避免原版 AABB 推挤与 `SOFT`/`HARD` 叠加。永久注册碰撞后，即使暂时关闭已发现骨骼，该实体仍保持 OBB 物理接入状态；此时结果是无物理碰撞，而不是静默恢复 AABB 推挤。
+When either entity in a pair has opted into physical OBB collision, Kltyton Bedrock Runtime cancels vanilla `Entity.push(Entity)` for that pair. This prevents the original AABB push from being added on top of `SOFT`/`HARD`. A permanently registered collision remains an OBB-physics opt-in when its discovered bones are temporarily disabled; disabling those bones produces no physical collision instead of silently restoring AABB pushing. / 当实体对中的任一方接入 OBB 物理碰撞时，Kltyton Bedrock Runtime 会取消该实体对的原版 `Entity.push(Entity)`，避免原版 AABB 推挤与 `SOFT`/`HARD` 叠加。永久注册碰撞后，即使暂时关闭已发现骨骼，该实体仍保持 OBB 物理接入状态；此时结果是无物理碰撞，而不是静默恢复 AABB 推挤。
 
 Runtime state API / 运行时状态 API：
 
 ```java
-ObbBoneState bone = entity.bonehitboxlib$obbBone(key).orElseThrow();
+ObbBoneState bone = entity.kltyton_bedrock_runtime$obbBone(key).orElseThrow();
 bone.setAttackBox(true);
 bone.setHurtBox(false); // Explicitly disables a registered/default HURT state. / 显式关闭注册默认值。
 bone.setTemporaryAttackBox("skill:slash", true);
@@ -68,7 +68,7 @@ EN: The client captures real post-animation vanilla `ModelPart` cubes and GeckoL
 
 CN：客户端捕获完成动画后的真实原版 `ModelPart` cube 与 GeckoLib cube。粗筛使用 OBB 自身世界包围范围的并集，而不是原版实体 AABB；候选骨骼对随后执行精确 OBB-vs-OBB SAT。
 
-For local-player `HARD` physics, a client mixin wraps the result of vanilla `Entity.move -> collide(delta)`. Vanilla first clips movement against blocks and ordinary entity shapes; BoneHitboxLib then applies translational continuous OBB SAT and returns one final allowed displacement to the rest of the original `move` method. Position, collision flags, grounded state, fall handling, and vanilla velocity restitution therefore remain in the normal movement pipeline. No hard-collision path calls `setPos`. / 本地玩家的 `HARD` 物理通过客户端 Mixin 包装原版 `Entity.move -> collide(delta)` 的结果：原版先处理方块及普通实体形状，本库再执行仅平移的连续 OBB SAT，并把唯一的最终允许位移交回原版 `move` 后半段。因此位置、碰撞标志、落地状态、坠落处理和原版速度恢复仍由正常移动管线维护；硬碰撞路径不再调用 `setPos`。
+For local-player `HARD` physics, a client mixin wraps the result of vanilla `Entity.move -> collide(delta)`. Vanilla first clips movement against blocks and ordinary entity shapes; Kltyton Bedrock Runtime then applies translational continuous OBB SAT and returns one final allowed displacement to the rest of the original `move` method. Position, collision flags, grounded state, fall handling, and vanilla velocity restitution therefore remain in the normal movement pipeline. No hard-collision path calls `setPos`. / 本地玩家的 `HARD` 物理通过客户端 Mixin 包装原版 `Entity.move -> collide(delta)` 的结果：原版先处理方块及普通实体形状，本库再执行仅平移的连续 OBB SAT，并把唯一的最终允许位移交回原版 `move` 后半段。因此位置、碰撞标志、落地状态、坠落处理和原版速度恢复仍由正常移动管线维护；硬碰撞路径不再调用 `setPos`。
 
 Four serverbound payloads are used / 使用四个发往服务端的包：
 
@@ -81,9 +81,9 @@ Worst-case event narrow phase is `O(P^2)` for `P` visible registered cubes. Loca
 
 ## Server Role / 服务端职责
 
-EN: `ServerObbStore` stores recent client model snapshots and previous bone transforms. `ObbServerGeometry` can raycast and run SAT against those immutable snapshots, and the server validates finite, invertible affine transforms, registered keys, entity tracking, snapshot radius, report budget and contact attributes. It does not replay GeckoLib animation or prove the model pose is genuine. Player attacks, interactions, mob attacks, and projectile hits are correlated only after their vanilla path occurs; BoneHitboxLib does not create a second damage call.
+EN: `ServerObbStore` stores recent client model snapshots and previous bone transforms. `ObbServerGeometry` can raycast and run SAT against those immutable snapshots, and the server validates finite, invertible affine transforms, registered keys, entity tracking, snapshot radius, report budget and contact attributes. It does not replay GeckoLib animation or prove the model pose is genuine. Player attacks, interactions, mob attacks, and projectile hits are correlated only after their vanilla path occurs; Kltyton Bedrock Runtime does not create a second damage call.
 
-CN：`ServerObbStore` 保存最近的客户端模型快照和上一帧骨骼变换；`ObbServerGeometry` 可以在这些不可变快照上执行射线和 SAT，服务端校验有限且可逆的仿射矩阵、注册键、实体追踪、快照半径、上报预算与接触属性；仍不会重放 GeckoLib 动画，也不能证明模型姿态真实。玩家攻击、交互、Mob 攻击和投射物命中只在对应原版路径完成后关联部位；BoneHitboxLib 不会再次调用伤害。
+CN：`ServerObbStore` 保存最近的客户端模型快照和上一帧骨骼变换；`ObbServerGeometry` 可以在这些不可变快照上执行射线和 SAT，服务端校验有限且可逆的仿射矩阵、注册键、实体追踪、快照半径、上报预算与接触属性；仍不会重放 GeckoLib 动画，也不能证明模型姿态真实。玩家攻击、交互、Mob 攻击和投射物命中只在对应原版路径完成后关联部位；Kltyton Bedrock Runtime 不会再次调用伤害。
 
 ## Server Geometry Query / 服务端几何查询
 
@@ -102,9 +102,9 @@ ObbServerGeometry.raycast(entity, from, to).ifPresent(hit ->
 
 This is a server query API over a client-produced pose. Without a rendering client or after the 40-tick freshness window, the optional snapshot is empty. / 这是“服务端查询客户端产出姿态”的 API；没有渲染客户端，或快照超过 40 tick 新鲜度窗口后，返回值为空。
 
-EN: Reports require an entity tracked by the reporter and a registered bone. The server derives inverse matrices and broad-phase bounds itself, takes ATTACK and physical collision modes from server bone state, requires recent matching geometry for contacts, and applies a shared per-player tick budget. A short reporter lease prevents different clients mixing entity pose frames. Override `bonehitboxlib$acceptObbReporter` to narrow reporters and `bonehitboxlib$maxSnapshotRadius` for models exceeding the default 64-block radius. These constraints cannot prove a client-produced animation or contact is genuine.
+EN: Reports require an entity tracked by the reporter and a registered bone. The server derives inverse matrices and broad-phase bounds itself, takes ATTACK and physical collision modes from server bone state, requires recent matching geometry for contacts, and applies a shared per-player tick budget. A short reporter lease prevents different clients mixing entity pose frames. Override `kltyton_bedrock_runtime$acceptObbReporter` to narrow reporters and `kltyton_bedrock_runtime$maxSnapshotRadius` for models exceeding the default 64-block radius. These constraints cannot prove a client-produced animation or contact is genuine.
 
-CN：报告必须来自正在追踪该实体的玩家，并命中注册骨骼。服务端重算逆矩阵与粗筛范围，攻击属性、物理碰撞模式取服务端骨骼状态；接触需有新鲜且匹配的几何，并受每玩家每 tick 总预算限制。短期上报者租约避免不同客户端混合姿态帧。可重写 `bonehitboxlib$acceptObbReporter` 缩小上报范围，大型模型可重写默认 64 格的 `bonehitboxlib$maxSnapshotRadius`。这些限制仍不能证明客户端动画或接触真实。
+CN：报告必须来自正在追踪该实体的玩家，并命中注册骨骼。服务端重算逆矩阵与粗筛范围，攻击属性、物理碰撞模式取服务端骨骼状态；接触需有新鲜且匹配的几何，并受每玩家每 tick 总预算限制。短期上报者租约避免不同客户端混合姿态帧。可重写 `kltyton_bedrock_runtime$acceptObbReporter` 缩小上报范围，大型模型可重写默认 64 格的 `kltyton_bedrock_runtime$maxSnapshotRadius`。这些限制仍不能证明客户端动画或接触真实。
 
 ## Duplicate Suppression / 重复抑制
 
@@ -155,7 +155,7 @@ registrar.register(ObbBoneRegistrar.ALL)
         .data(ObbBuiltinDataKeys.CARRIES_ENTITIES, true);
 ```
 
-`ObbBuiltinDataKeys.PART_HEALTH` is a built-in behavior: when a registered hurt bone receives vanilla damage, BoneHitboxLib automatically subtracts `damageReceived()` once. Consumers can read the updated value from later hooks for destruction, UI, or skill logic / `ObbBuiltinDataKeys.PART_HEALTH` 是内置行为：已注册受击骨骼承受原版伤害时，BoneHitboxLib 会自动扣除一次 `damageReceived()`；使用方可在后续 hook 中读取更新值，用于破坏、UI 或技能逻辑：
+`ObbBuiltinDataKeys.PART_HEALTH` is a built-in behavior: when a registered hurt bone receives vanilla damage, Kltyton Bedrock Runtime automatically subtracts `damageReceived()` once. Consumers can read the updated value from later hooks for destruction, UI, or skill logic / `ObbBuiltinDataKeys.PART_HEALTH` 是内置行为：已注册受击骨骼承受原版伤害时，Kltyton Bedrock Runtime 会自动扣除一次 `damageReceived()`；使用方可在后续 hook 中读取更新值，用于破坏、UI 或技能逻辑：
 
 ```java
 context.hurtBone().getData(ObbBuiltinDataKeys.PART_HEALTH).ifPresent(health -> {
@@ -165,7 +165,7 @@ context.hurtBone().getData(ObbBuiltinDataKeys.PART_HEALTH).ifPresent(health -> {
 });
 ```
 
-The library writes persistent bone attributes, collision mode, registered data values, and persistent named attribute groups below the entity's `BoneHitboxLib` save child. Client snapshot attributes and temporary animation attack groups are runtime-only. Unknown or undecodable extension values are preserved for a later compatible load. Entity-owned runtime state is released with the entity. / 库会在实体的 `BoneHitboxLib` 保存子节点中写入持久属性、碰撞模式、已注册扩展数据和永久命名属性组；未知或解码失败的扩展值保留到下一次兼容加载。客户端快照属性与动画临时攻击组仅存在于运行时；运行状态直接由实体持有，随实体释放。
+The library writes persistent bone attributes, collision mode, registered data values, and persistent named attribute groups below the entity's `KltytonBedrockRuntime` save child. Client snapshot attributes and temporary animation attack groups are runtime-only. Unknown or undecodable extension values are preserved for a later compatible load. Entity-owned runtime state is released with the entity. / 库会在实体的 `KltytonBedrockRuntime` 保存子节点中写入持久属性、碰撞模式、已注册扩展数据和永久命名属性组；未知或解码失败的扩展值保留到下一次兼容加载。客户端快照属性与动画临时攻击组仅存在于运行时；运行状态直接由实体持有，随实体释放。
 
 Data packages are separated by responsibility: key infrastructure is under `api.data.key`, built-in keys under `api.data.builtin.key`, and `ObbPartHealth` under `api.data.builtin.health`. Its automatically registered runtime consumer is `server.combat.damage.ObbPartHealthHooks`; it is not example code. The rest of the project follows the same non-flat package policy; see [Package Layout and Migration](package_layout.md). / 数据包按职责拆分：键基础设施位于 `api.data.key`，内置键位于 `api.data.builtin.key`，`ObbPartHealth` 位于 `api.data.builtin.health`；自动注册的运行时消费逻辑为 `server.combat.damage.ObbPartHealthHooks`，不属于示例代码。项目其他部分同样采用非扁平包策略，详见 [包结构与迁移](package_layout.md)。
 
@@ -174,10 +174,10 @@ Data packages are separated by responsibility: key infrastructure is under `api.
 `GeoBoneHitboxEntity` does not import GeckoLib classes. It exposes generic permanent/temporary group methods plus attack/hurt/collision conveniences. All attributes in the `gecko_animation` scope automatically clear when the bound animation ends or changes. / `GeoBoneHitboxEntity` 不导入 GeckoLib 类。它提供通用永久/临时组方法，以及攻击、受击、碰撞便捷方法；`gecko_animation` 作用域中的全部属性会在绑定动画结束或切换时自动清除。
 
 ```java
-bonehitboxlib$geoSetTemporaryAttackGroups(List.of("right_arm"));
-bonehitboxlib$geoSetTemporaryHurtGroups(List.of("shield"));
-bonehitboxlib$geoSetTemporaryCollisionGroups(ObbCollisionMode.HARD, List.of("barrier"));
-bonehitboxlib$geoClearTemporaryGroups();
+kltyton_bedrock_runtime$geoSetTemporaryAttackGroups(List.of("right_arm"));
+kltyton_bedrock_runtime$geoSetTemporaryHurtGroups(List.of("shield"));
+kltyton_bedrock_runtime$geoSetTemporaryCollisionGroups(ObbCollisionMode.HARD, List.of("barrier"));
+kltyton_bedrock_runtime$geoClearTemporaryGroups();
 ```
 
 ## GeckoLib Keyframe Skills / GeckoLib 关键帧技能
@@ -192,7 +192,7 @@ The entity must still be tracked by at least one client, and its custom instruct
 public final class SkillMob extends PathfinderMob
         implements GeoEntity, GeoKeyframeSkillEntity {
     @Override
-    public void bonehitboxlib$registerGeoKeyframeSkills(GeoKeyframeSkillRegistrar registrar) {
+    public void kltyton_bedrock_runtime$registerGeoKeyframeSkills(GeoKeyframeSkillRegistrar registrar) {
         registrar.point("fire", context -> fire(context.target().orElse(null)));
         registrar.window("sword_window", "attackStart", "attackEnd", context -> {
             if (context.phase() == GeoKeyframeSkillPhase.TICK) {
@@ -216,11 +216,11 @@ public final class SkillMob extends PathfinderMob
 
 The server context includes reporter, subject, AI target/projectile owner helpers, skill id, raw marker, lifecycle phase, controller and animation names, animation/timeline/marker clocks, speed, trigger/transition/finished flags, client sequence, client/server game times, entity pose/velocity, and the latest `ObbEntityGeometrySnapshot`. Reports from multiple clients are deduplicated by entity, animation, controller, marker, and nearby observed/receive ticks. / 服务端上下文包含上报玩家、技能主体、AI 目标/投射物拥有者辅助方法、技能 id、原始 marker、生命周期阶段、控制器与动画名、动画/timeline/marker 时钟、速度、触发/过渡/结束状态、客户端序列、客户端/服务端游戏时间、实体位姿/速度，以及最新 `ObbEntityGeometrySnapshot`。多客户端上报按实体、动画、控制器、marker 与相邻观察/接收 tick 去重。
 
-GeckoLib imports are isolated in optional client compatibility packages, including the marker bridge and controller snapshot extractor. The logical ticker references only vanilla rendering APIs and the Gecko-independent entity contract. All packet, server, context, registration, ticking, and geometry APIs remain loadable without GeckoLib. / GeckoLib 导入隔离在可选客户端兼容包中，包括 marker 桥和控制器快照提取器；逻辑 ticker 只引用原版渲染 API 和不依赖 GeckoLib 的实体契约。网络包、服务端、上下文、注册、tick 与几何 API 在不安装 GeckoLib 时仍可加载。
+GeckoLib imports are isolated in client compatibility packages, including the marker bridge and controller snapshot extractor. The logical ticker references only vanilla rendering APIs and the Gecko-independent entity contract. All packet, server, context, registration, ticking, and geometry APIs remain free of GeckoLib types. / GeckoLib 导入隔离在客户端兼容包中，包括 marker 桥和控制器快照提取器；逻辑 ticker 只引用原版渲染 API 和不依赖 GeckoLib 的实体契约。网络包、服务端、上下文、注册、tick 与几何 API 均不暴露 GeckoLib 类型。
 
 All controller states are sent, including stopped controllers and off-screen heartbeat updates. `ObbServerGeometry.animations(entity)` exposes the current list. Each skill window stays bound to its opening controller; stop, switch, loop rewind, finished animation, removal, dimension change and timeout cancel it. The separate `gecko_animation` attribute scope follows the same animation lifecycle; a custom skill handler must release any resources or custom scopes it owns in END/CANCEL. A default window is limited to 1,200 server ticks. / 上报包含全部控制器及视锥外心跳；可用 `ObbServerGeometry.animations(entity)` 查询。技能窗口绑定开启它的控制器，在停止、切换、循环回绕、结束、实体移除、换维度或超时时取消；独立的 `gecko_animation` 属性作用域按同样的动画生命周期清理，自定义技能处理器需在 END/CANCEL 中释放自己的资源或自建作用域。窗口默认最长 1,200 服务端 tick。
 
-Override `bonehitboxlib$acceptGeoKeyframeSkill(reporter, marker, animation, markerTimeSeconds)` to check the server-owned attack/skill state before accepting an opening marker. Registration and client tracking alone are not skill authorization. / 必须由接入方按需要重写此方法，将 marker 与服务端攻击/技能状态对应；仅注册 marker 或追踪实体不代表技能已获准执行。
+Override `kltyton_bedrock_runtime$acceptGeoKeyframeSkill(reporter, marker, animation, markerTimeSeconds)` to check the server-owned attack/skill state before accepting an opening marker. Registration and client tracking alone are not skill authorization. / 必须由接入方按需要重写此方法，将 marker 与服务端攻击/技能状态对应；仅注册 marker 或追踪实体不代表技能已获准执行。
 
 ## Independent Physics and Carrying / 独立物理与承载
 
@@ -254,6 +254,6 @@ For walkable slopes, the center-foot ray owns the support height. Corner samples
 
 ## Protocol and limits / 协议与限制
 
-Entity snapshot payloads now use `bonehitboxlib:entity_parts_v3`; NeoForge transport uses version `3`. Both sides must run a matching build. Existing entity save keys remain unchanged. Server snapshot, contact, selection and skill tables clear on server shutdown. / 实体快照包升级为 `bonehitboxlib:entity_parts_v3`，NeoForge 传输版本为 `3`，两端需使用匹配构建；实体存档键不变。服务端关闭时清除快照、接触、选择和技能运行表。
+Entity snapshot payloads now use `kltyton_bedrock_runtime:entity_parts_v3`; NeoForge transport uses version `3`. Both sides must run a matching build. Existing entity save keys remain unchanged. Server snapshot, contact, selection and skill tables clear on server shutdown. / 实体快照包升级为 `kltyton_bedrock_runtime:entity_parts_v3`，NeoForge 传输版本为 `3`，两端需使用匹配构建；实体存档键不变。服务端关闭时清除快照、接触、选择和技能运行表。
 
 Spatial broad-phase filtering and per-tick reuse reduce unnecessary pair checks; worst-case dense contacts remain quadratic. No worker thread reads mutable world state or render poses. / 空间粗筛和同 tick 复用减少无效比较，密集接触的最坏复杂度仍为平方级；没有把可变世界状态或渲染姿态交给工作线程。

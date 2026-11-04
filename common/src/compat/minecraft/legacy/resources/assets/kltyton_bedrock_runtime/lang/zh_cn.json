@@ -1,0 +1,8 @@
+{
+    "key.categories.kltyton_bedrock_runtime": "KltytonBedrockRuntime",
+    "key.kltyton_bedrock_runtime.hold_obb": "显示 OBB 部位",
+    "commands.kltyton_bedrock_runtime.particle.failed": "未选择接收粒子请求的玩家。",
+    "commands.kltyton_bedrock_runtime.particle.add": "已请求播放粒子效果 %s。",
+    "commands.kltyton_bedrock_runtime.particle.not_found": "未找到粒子发射器 %s。 已移除粒子发射器 %s。",
+    "commands.kltyton_bedrock_runtime.particle.remove": ""
+}

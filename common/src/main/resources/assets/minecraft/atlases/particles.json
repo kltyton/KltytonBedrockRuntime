@@ -1,0 +1,5 @@
+{
+    "sources": [
+        { "type": "kltyton_bedrock_runtime:bedrock_particles" }
+    ]
+}

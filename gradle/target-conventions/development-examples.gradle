@@ -1,0 +1,136 @@
+import org.gradle.api.tasks.bundling.Jar
+
+if (!project.hasProperty('development_examples')) {
+    return
+}
+
+def templeRoot = file('../..')
+def examplesRoot = new File(templeRoot, 'examples')
+def family = minecraft_version.startsWith('26.') ? '26' : 'legacy'
+def layers = [
+        new File(examplesRoot, 'src/main'),
+        new File(examplesRoot, "src/compat/minecraft/${family}"),
+        minecraft_version == '26.2' ? null : new File(examplesRoot, 'src/compat/minecraft/pre_26_2'),
+        new File(examplesRoot, "src/compat/minecraft/${minecraft_version}"),
+        new File(examplesRoot, "src/compat/${loader}"),
+        new File(examplesRoot, "src/compat/${loader}/${family}"),
+        new File(examplesRoot, "src/compat/${loader}/${minecraft_version}")
+].findAll { it != null && it.isDirectory() }
+def javaDirectories = layers.collect { new File(it, 'java') }.findAll { it.isDirectory() }
+def resourceDirectories = layers.reverse().collect { new File(it, 'resources') }.findAll { it.isDirectory() }
+
+def generateExampleAssets = tasks.register('generateDevelopmentExampleAssets') {
+    def output = layout.buildDirectory.dir('generated/development-examples')
+    outputs.dir(output)
+    doLast {
+        def file = output.get().file('assets/kltyton_bedrock_runtime_examples/textures/entity/kltyton_bedrock_runtime/example_humanoid.png').asFile
+        file.parentFile.mkdirs()
+        def image = new java.awt.image.BufferedImage(64, 64, java.awt.image.BufferedImage.TYPE_INT_ARGB)
+        for (int y = 0; y < 64; y++) {
+            for (int x = 0; x < 64; x++) {
+                int alpha = 255
+                int red = 230
+                int green = 230
+                int blue = 230
+                if (((x / 8) + (y / 8)) % 2 == 0) {
+                    red = 245
+                    green = 245
+                    blue = 245
+                }
+                if (x < 8 || x >= 56 || y < 8 || y >= 56) {
+                    red = 80
+                    green = 140
+                    blue = 200
+                }
+                if (y < 4) {
+                    red = 220
+                    green = 60
+                    blue = 60
+                } else if (y >= 60) {
+                    red = 40
+                    green = 90
+                    blue = 220
+                }
+                image.setRGB(x, y, (alpha << 24) | (red << 16) | (green << 8) | blue)
+            }
+        }
+        javax.imageio.ImageIO.write(image, 'png', file)
+    }
+}
+
+def examples = sourceSets.create('developmentExamples')
+examples.java.setSrcDirs(javaDirectories)
+examples.resources.setSrcDirs(resourceDirectories)
+examples.resources.srcDir(generateExampleAssets)
+examples.compileClasspath += sourceSets.main.output
+examples.runtimeClasspath += sourceSets.main.output
+examples.compileClasspath += configurations.compileClasspath
+examples.runtimeClasspath += configurations.runtimeClasspath
+
+configurations {
+    developmentExamplesImplementation.extendsFrom implementation
+    developmentExamplesCompileOnly.extendsFrom compileOnly
+    developmentExamplesRuntimeOnly.extendsFrom runtimeOnly
+}
+
+tasks.named('compileDevelopmentExamplesJava') {
+    options.encoding = 'UTF-8'
+    options.release = java_version as int
+}
+
+def exampleProperties = [
+        version                    : project.version.toString(),
+        mod_license                : mod_license,
+        mod_authors                : mod_authors,
+        loader_version             : loader_version,
+        loader_version_range       : loader_version_range,
+        fml_version_range          : findProperty('fml_version_range') ?: '',
+        forge_loader_version_range : findProperty('forge_loader_version_range') ?: '',
+        forge_version              : findProperty('forge_version') ?: '',
+        minecraft_version          : minecraft_version,
+        minecraft_version_range    : minecraft_version_range,
+        neoforge_version           : findProperty('neoforge_version') ?: '',
+        geckolib_version           : geckolib_version,
+        java_version               : java_version
+]
+tasks.named('processDevelopmentExamplesResources') {
+    duplicatesStrategy = org.gradle.api.file.DuplicatesStrategy.EXCLUDE
+    inputs.properties(exampleProperties)
+    filesMatching(['fabric.mod.json', 'META-INF/mods.toml', 'META-INF/neoforge.mods.toml']) {
+        expand(exampleProperties)
+    }
+}
+
+if (loader == 'fabric') {
+    loom.mods {
+        'kltyton_bedrock_runtime_examples' {
+            sourceSet examples
+        }
+    }
+} else if (loader == 'forge') {
+    mixin {
+        config('kltyton_bedrock_runtime_examples.mixins.json')
+    }
+    legacyForge.mods {
+        'kltyton_bedrock_runtime_examples' {
+            sourceSet examples
+        }
+    }
+} else {
+    neoForge.mods {
+        'kltyton_bedrock_runtime_examples' {
+            sourceSet examples
+        }
+    }
+}
+
+tasks.named('build') {
+    dependsOn tasks.named('developmentExamplesClasses')
+}
+tasks.matching { it.name == 'runClient' || it.name == 'runServer' }.configureEach {
+    dependsOn tasks.named('developmentExamplesClasses')
+}
+tasks.withType(Jar).configureEach {
+    exclude 'com/kltyton/bedrockruntime/examples/**'
+    exclude 'assets/kltyton_bedrock_runtime_examples/**'
+}

@@ -1,0 +1,360 @@
+import java.security.MessageDigest
+
+apply plugin: 'java-library'
+
+def targetKey = "${rootProject.property('loader')}-${rootProject.property('minecraft_version')}"
+layout.buildDirectory.set(new File(projectDir, "build/${targetKey}"))
+
+def artifactId = project.findProperty('mochafloatsArtifact')
+if (!(artifactId instanceof String) || !(artifactId ==~ /[a-z][a-z0-9_]*/)) {
+    throw new GradleException('mochafloatsArtifact must be one of: lexer, parser, runtime')
+}
+if (!(artifactId in ['lexer', 'parser', 'runtime'])) {
+    throw new GradleException("Unsupported mochafloats artifact: ${artifactId}")
+}
+
+def configuredRoot = project.findProperty('mochafloatsRoot')
+def mochafloatsRoot = configuredRoot instanceof File ? configuredRoot : file(configuredRoot ?: '..')
+def upstreamVersion = '6.1.1'
+def derivedVersion = '6.1.1-kbr.1'
+def upstreamPackage = 'org.redlance.mocha'
+def relocatedPackage = 'com.kltyton.bedrockruntime.internal.mochafloats'
+def upstreamPackagePath = upstreamPackage.replace('.', '/')
+def relocatedPackagePath = relocatedPackage.replace('.', '/')
+def expectedSources = [
+        lexer  : '9acaab7d8817611906220e99ae8804a93dbed6f796fcc5c30d779607c59ec9a6',
+        parser : '50e2af411b262e81c9fdb676086d4523e9946160c555cb35edc8e1b5a140d86e',
+        runtime: '515a69a979c99ed220369f6bfcdcbc6ff4068e72ad024ff53715e741855241a8'
+]
+def expectedSha256 = expectedSources[artifactId]
+
+group = relocatedPackage
+version = derivedVersion
+base {
+    archivesName = artifactId
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+    withSourcesJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.release = 17
+}
+
+repositories {
+    maven {
+        name = 'RedlanceMochafloats'
+        url = uri('https://repo.redlance.org/public')
+    }
+    mavenCentral()
+}
+
+configurations {
+    upstreamSources {
+        canBeConsumed = false
+        canBeResolved = true
+        transitive = false
+    }
+}
+
+dependencies {
+    upstreamSources("org.redlance.mochafloats:${artifactId}:${upstreamVersion}") {
+        artifact {
+            name = artifactId
+            type = 'jar'
+            extension = 'jar'
+            classifier = 'sources'
+        }
+        transitive = false
+    }
+
+    // Annotation-only dependencies; never distributed with the derived Java 17 modules.
+    compileOnly 'org.jetbrains:annotations:26.1.0'
+    compileOnly 'com.google.j2objc:j2objc-annotations:3.1'
+}
+
+sourceSets {
+    main {
+        resources.srcDir(new File(mochafloatsRoot, 'resources'))
+    }
+}
+
+def moduleJavaDir = new File(projectDir, 'src/main/java')
+def extractedDir = layout.buildDirectory.dir("generated/mochafloats/${artifactId}/upstream")
+def patchedDir = layout.buildDirectory.dir("generated/mochafloats/${artifactId}/patched")
+def relocatedDir = layout.buildDirectory.dir("generated/mochafloats/${artifactId}/relocated")
+def patchesDir = new File(mochafloatsRoot, "patches/${artifactId}")
+def supportDir = new File(patchesDir, 'support')
+
+def sha256 = { File source ->
+    def digest = MessageDigest.getInstance('SHA-256').digest(source.bytes)
+    digest.collect { String.format('%02x', it & 0xff) }.join()
+}
+
+def failPatch = { String message ->
+    throw new GradleException("mochafloats patch failure: ${message}")
+}
+
+def applyPatchFile = { File patchFile, File sourcesRoot, String expectedArtifact ->
+    def lines = patchFile.readLines('UTF-8')
+    String artifact = null
+    String upstream = null
+    String currentFile = null
+    def hunks = []
+    int index = 0
+
+    while (index < lines.size()) {
+        String line = lines[index]
+        String trimmed = line.trim()
+        if (trimmed.isEmpty() || trimmed.startsWith('#')) {
+            index++
+            continue
+        }
+        if (line.startsWith('artifact:')) {
+            artifact = line.substring('artifact:'.length()).trim()
+            index++
+            continue
+        }
+        if (line.startsWith('upstream:')) {
+            upstream = line.substring('upstream:'.length()).trim()
+            index++
+            continue
+        }
+        if (line.startsWith('file:')) {
+            currentFile = line.substring('file:'.length()).trim()
+            if (currentFile.isEmpty()) {
+                failPatch("${patchFile}: file: path must not be empty")
+            }
+            index++
+            continue
+        }
+        if (line.startsWith('<<<<<<<')) {
+            if (currentFile == null) {
+                failPatch("${patchFile}: hunk before file: header")
+            }
+            def original = []
+            def replacement = []
+            index++
+            while (index < lines.size() && !lines[index].startsWith('=======')) {
+                original.add(lines[index])
+                index++
+            }
+            if (index >= lines.size()) {
+                failPatch("${patchFile}: missing ======= separator")
+            }
+            index++
+            while (index < lines.size() && !lines[index].startsWith('>>>>>>>')) {
+                replacement.add(lines[index])
+                index++
+            }
+            if (index >= lines.size()) {
+                failPatch("${patchFile}: missing >>>>>>> REPLACEMENT terminator")
+            }
+            index++
+            if (original.isEmpty()) {
+                failPatch("${patchFile}: empty SOURCE anchor")
+            }
+            hunks.add([
+                    file       : currentFile,
+                    original   : original.join('\n'),
+                    replacement: replacement.join('\n')
+            ])
+            continue
+        }
+        failPatch("${patchFile}: unexpected line ${index + 1}: ${line}")
+    }
+
+    if (artifact == null) {
+        failPatch("${patchFile}: missing artifact: header")
+    }
+    if (artifact != expectedArtifact) {
+        failPatch("${patchFile}: targets artifact ${artifact}, expected ${expectedArtifact}")
+    }
+    if (upstream != upstreamVersion) {
+        failPatch("${patchFile}: upstream ${upstream}, expected ${upstreamVersion}")
+    }
+    if (hunks.isEmpty()) {
+        failPatch("${patchFile}: no hunks")
+    }
+
+    hunks.each { hunk ->
+        File target = new File(sourcesRoot, hunk.file).canonicalFile
+        if (!target.toPath().startsWith(sourcesRoot.canonicalFile.toPath())) {
+            failPatch("${patchFile}: file escapes source root: ${hunk.file}")
+        }
+        if (!target.isFile()) {
+            failPatch("${patchFile}: source file not found: ${hunk.file}")
+        }
+        String text = target.getText('UTF-8')
+        int matches = text.count(hunk.original)
+        if (matches != 1) {
+            failPatch("${patchFile}: anchor in ${hunk.file} matched ${matches} times, expected exactly one")
+        }
+        target.setText(text.replace(hunk.original, hunk.replacement), 'UTF-8')
+    }
+}
+
+def addSupportSources = { File supportRoot, File sourcesRoot ->
+    if (!supportRoot.isDirectory()) {
+        return
+    }
+    fileTree(supportRoot).files.sort { it.path }.each { File source ->
+        String relative = supportRoot.toPath().relativize(source.toPath()).toString().replace('\\', '/')
+        if (!relative.endsWith('.java')) {
+            failPatch("${supportRoot}: support file must be a .java source: ${relative}")
+        }
+        File target = new File(sourcesRoot, relative).canonicalFile
+        if (!target.toPath().startsWith(sourcesRoot.canonicalFile.toPath())) {
+            failPatch("${supportRoot}: support file escapes source root: ${relative}")
+        }
+        if (target.exists()) {
+            failPatch("${supportRoot}: support file collides with extracted source: ${relative}")
+        }
+        target.parentFile.mkdirs()
+        target.bytes = source.bytes
+    }
+}
+
+def verifySources = tasks.register('verifyMochafloatsSources') {
+    group = 'mochafloats'
+    description = "Verifies the pinned ${artifactId} 6.1.1 sources JAR checksum."
+    inputs.files(configurations.upstreamSources)
+    doLast {
+        def files = configurations.upstreamSources.files
+        if (files.size() != 1) {
+            throw new GradleException("Expected exactly one ${artifactId} sources JAR, got ${files.size()}")
+        }
+        def sourceJar = files.first()
+        def actual = sha256(sourceJar)
+        if (actual != expectedSha256) {
+            throw new GradleException("${artifactId} sources JAR checksum mismatch: ${actual}, expected ${expectedSha256}")
+        }
+    }
+}
+
+def extractSources = tasks.register('extractMochafloatsSources', Sync) {
+    group = 'mochafloats'
+    description = "Extracts the pinned ${artifactId} 6.1.1 sources JAR."
+    dependsOn verifySources
+    inputs.files(configurations.upstreamSources)
+    from {
+        configurations.upstreamSources.collect { zipTree(it) }
+    }
+    into(extractedDir)
+    includeEmptyDirs = false
+}
+
+def patchSources = tasks.register('patchMochafloatsSources') {
+    group = 'mochafloats'
+    description = "Applies version-locked source patches and support sources for ${artifactId}."
+    dependsOn extractSources
+    inputs.dir(extractedDir)
+    inputs.files(fileTree(patchesDir) { include '**/*.patch' })
+    inputs.files(fileTree(supportDir) { include '**/*.java' })
+    outputs.dir(patchedDir)
+    doLast {
+        File output = patchedDir.get().asFile
+        project.delete(output)
+        project.copy {
+            from(extractedDir.get().asFile)
+            into(output)
+        }
+        if (patchesDir.isDirectory()) {
+            fileTree(patchesDir) { include '**/*.patch' }.files
+                    .sort { it.path }
+                    .each { patchFile -> applyPatchFile(patchFile, output, artifactId) }
+        }
+        addSupportSources(supportDir, output)
+    }
+}
+
+def relocateSources = tasks.register('relocateMochafloatsSources') {
+    group = 'mochafloats'
+    description = "Relocates patched ${artifactId} sources and KBR support sources into the isolated KBR package."
+    dependsOn patchSources
+    inputs.dir(patchedDir)
+    if (moduleJavaDir.isDirectory()) {
+        inputs.dir(moduleJavaDir)
+    }
+    outputs.dir(relocatedDir)
+    doLast {
+        File output = relocatedDir.get().asFile
+        project.delete(output)
+        project.copy {
+            from(patchedDir.get().asFile)
+            into(output)
+        }
+        if (moduleJavaDir.isDirectory()) {
+            project.copy {
+                from(moduleJavaDir)
+                into(output)
+                duplicatesStrategy = DuplicatesStrategy.FAIL
+            }
+        }
+
+        File upstreamRoot = new File(output, upstreamPackagePath)
+        File relocatedRoot = new File(output, relocatedPackagePath)
+        if (!upstreamRoot.isDirectory()) {
+            throw new GradleException("mochafloats relocation failure: missing ${upstreamPackagePath}")
+        }
+
+        fileTree(output) { include '**/*.java' }.files.sort { it.path }.each { File source ->
+            String original = source.getText('UTF-8')
+            String relocated = original
+                    .replace("${upstreamPackage}.", "${relocatedPackage}.")
+                    .replace("${upstreamPackage};", "${relocatedPackage};")
+            if (relocated != original) {
+                source.setText(relocated, 'UTF-8')
+            }
+        }
+
+        fileTree(upstreamRoot).files.sort { it.path }.each { File source ->
+            String relative = upstreamRoot.toPath().relativize(source.toPath()).toString().replace('\\', '/')
+            File target = new File(relocatedRoot, relative)
+            if (target.exists()) {
+                throw new GradleException("mochafloats relocation collision: ${relative}")
+            }
+            target.parentFile.mkdirs()
+            target.bytes = source.bytes
+            if (!source.delete()) {
+                throw new GradleException("mochafloats relocation failure: cannot remove ${source}")
+            }
+        }
+        project.delete(upstreamRoot)
+
+        fileTree(output) { include '**/*.java' }.files.sort { it.path }.each { File source ->
+            if (source.getText('UTF-8').contains("${upstreamPackage}.")) {
+                throw new GradleException("mochafloats relocation failure: unrelocated source ${source}")
+            }
+        }
+    }
+}
+
+sourceSets.main.java.setSrcDirs([relocatedDir.get().asFile])
+
+tasks.named('compileJava', JavaCompile) {
+    dependsOn relocateSources
+}
+
+tasks.named('sourcesJar', Jar) {
+    dependsOn relocateSources
+    from(relocatedDir.get().asFile) {
+        include '**/*.java'
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.named('jar', Jar) {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest.attributes(
+            'FMLModType': 'GAMELIBRARY',
+            'Automatic-Module-Name': "com.kltyton.bedrockruntime.internal.mochafloats.${artifactId}",
+            'Implementation-Title': artifactId,
+            'Implementation-Version': project.version.toString()
+    )
+}

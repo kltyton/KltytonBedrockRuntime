@@ -1,0 +1,10 @@
+{
+    "pack": {
+        "description": "Kltyton Bedrock Runtime Development Examples",
+        "pack_format": 34,
+        "supported_formats": [
+            34,
+            48
+        ]
+    }
+}

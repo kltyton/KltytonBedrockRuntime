@@ -1,0 +1,12 @@
+ext.mochafloatsArtifact = 'parser'
+ext.mochafloatsRoot = file('..')
+
+apply from: file('../mochafloats-module.gradle')
+
+dependencies {
+    api project(':mochafloatsLexer')
+
+    // MC 1.20.1 resolves Netty 4.1.82.Final (1.21.1: 4.1.97.Final; 26.x: 4.2.x).
+    // Use the lowest host-compatible 4.1 API and never put Netty on a published/runtime classpath.
+    compileOnly 'io.netty:netty-buffer:4.1.82.Final'
+}

@@ -1,0 +1,108 @@
+apply from: file('../../gradle/target-conventions/repositories.gradle')
+
+def common = project(':common')
+def modern = (java_version as int) >= 25
+def geckoGroup = modern ? 'com.geckolib' : 'software.bernie.geckolib'
+def gecko = "${geckoGroup}:geckolib-${loader}-${minecraft_version}:${geckolib_version}"
+dependencies {
+    if (loader == 'fabric' && !modern) {
+        modCompileOnly gecko
+        modRuntimeOnly gecko
+        modApi "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${forge_config_api_port_version}"
+    } else if (loader == 'forge') {
+        modCompileOnly gecko
+        modRuntimeOnly gecko
+        annotationProcessor 'net.fabricmc:sponge-mixin:0.17.3+mixin.0.8.7'
+        annotationProcessor 'io.github.llamalad7:mixinextras-common:0.5.0'
+        compileOnly 'io.github.llamalad7:mixinextras-common:0.5.0'
+        jarJar(implementation('io.github.llamalad7:mixinextras-forge:0.5.0')) {
+            version { strictly '[0.5.0,0.6.0)'; prefer '0.5.0' }
+        }
+    } else {
+        compileOnly gecko
+        runtimeOnly gecko
+        api "fuzs.forgeconfigapiport:forgeconfigapiport-${loader}:${forge_config_api_port_version}"
+    }
+    if (loader == 'fabric' && findProperty('fabric_rendering_v1_version')) {
+        implementation "net.fabricmc.fabric-api:fabric-rendering-v1:${fabric_rendering_v1_version}"
+    }
+}
+
+dependencies {
+    if (loader == 'fabric') {
+        include project(':mochafloatsLexer')
+        include project(':mochafloatsParser')
+        include project(':mochafloatsRuntime')
+    } else if (loader == 'forge') {
+        jarJar(project(':mochafloatsLexer')) { transitive = false }
+        jarJar(project(':mochafloatsParser')) { transitive = false }
+        jarJar(project(':mochafloatsRuntime')) { transitive = false }
+        additionalRuntimeClasspath project(':mochafloatsRuntime')
+    } else {
+        jarJar(implementation(project(':mochafloatsLexer'))) { transitive = false }
+        jarJar(implementation(project(':mochafloatsParser'))) { transitive = false }
+        jarJar(implementation(project(':mochafloatsRuntime'))) { transitive = false }
+    }
+}
+
+if (loader == 'fabric') {
+    def aw = common.templeResourceDirectories.collect { new File(it, "${mod_id}.accesswidener") }.find { it.isFile() }
+    if (aw != null) { loom.accessWidenerPath.set(aw) }
+    loom.runs {
+        client { client(); runDir('runs/client') }
+        server { server(); runDir('runs/server') }
+    }
+} else {
+    def at = common.templeResourceDirectories.collect { new File(it, 'META-INF/accesstransformer.cfg') }.find { it.isFile() }
+    if (at != null) {
+        if (loader == 'forge') { legacyForge.accessTransformers.from(at) }
+        else { neoForge.accessTransformers.from(at) }
+    }
+}
+
+if (loader == 'forge') {
+    mixin {
+        add(sourceSets.main, "${mod_id}.refmap.json")
+        config("${mod_id}.mixins.json")
+        config("${mod_id}.model.mixins.json")
+    }
+    tasks.named('jar', Jar) {
+        finalizedBy 'reobfJar'
+        manifest.attributes('MixinConfigs': "${mod_id}.mixins.json,${mod_id}.model.mixins.json")
+    }
+}
+
+// Common owns all selected game sources; its processor receives the target's mappings.
+def commonCompile = common.tasks.named('compileJava', JavaCompile)
+def targetCompile = tasks.named('compileJava', JavaCompile)
+gradle.projectsEvaluated {
+    def targetTask = targetCompile.get()
+    def argumentProviders = new ArrayList(targetTask.options.compilerArgumentProviders)
+    def arguments = new ArrayList(targetTask.options.compilerArgs)
+    targetTask.options.compilerArgumentProviders.removeAll(argumentProviders)
+    commonCompile.configure {
+        options.annotationProcessorPath = common.configurations.annotationProcessor + configurations.annotationProcessor
+        options.compilerArgumentProviders.addAll(argumentProviders)
+        def refmap = new File(destinationDirectory.get().asFile, "${mod_id}.refmap.json")
+        options.compilerArgs.addAll(arguments.collect { argument ->
+            argument.startsWith('-AoutRefMapFile=') ? "-AoutRefMapFile=${refmap.absolutePath}" : argument
+        })
+    }
+}
+
+evaluationDependsOn(':vanillaModels')
+def shapeProducer = project(':vanillaModels').tasks.named('generateVanillaBlockShapes')
+[project, common].each { owner ->
+    owner.tasks.named('processResources') { dependsOn shapeProducer }
+    owner.tasks.named('sourcesJar') { dependsOn shapeProducer }
+}
+tasks.named('javadoc', Javadoc) {
+    source common.templeSourceDirectories
+    classpath += common.sourceSets.main.compileClasspath + common.sourceSets.main.output
+    options.encoding = 'UTF-8'
+    options.charSet = 'UTF-8'
+    options.docEncoding = 'UTF-8'
+    options.addBooleanOption('Xdoclint:none', true)
+}
+
+apply from: file('../../gradle/target-conventions/development-examples.gradle')

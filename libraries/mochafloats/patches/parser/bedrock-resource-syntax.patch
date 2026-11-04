@@ -1,0 +1,118 @@
+# Bedrock resource-version syntax and extended numeric operators.
+artifact: parser
+upstream: 6.1.1
+file: org/redlance/mocha/parser/ast/BinaryExpression.java
+<<<<<<< SOURCE
+        NEQ("!=", 500);
+=======
+        NEQ("!=", 500),
+        MOD("%", 1000),
+        POW("^", 1100);
+>>>>>>> REPLACEMENT
+
+file: org/redlance/mocha/parser/MolangParser.java
+<<<<<<< SOURCE
+public sealed interface MolangParser extends Closeable permits MolangParserImpl {
+=======
+public sealed interface MolangParser extends Closeable permits MolangParserImpl {
+
+    static List<Expression> parseAll(String source, ParserDialect dialect) throws IOException {
+        try (MolangParser parser = new MolangParserImpl(MolangLexer.lexer(source), dialect)) {
+            return parser.parseAll();
+        }
+    }
+>>>>>>> REPLACEMENT
+
+file: org/redlance/mocha/parser/MolangParserImpl.java
+<<<<<<< SOURCE
+    private final MolangLexer lexer;
+=======
+    private final MolangLexer lexer;
+    private final ParserDialect dialect;
+>>>>>>> REPLACEMENT
+
+file: org/redlance/mocha/parser/MolangParserImpl.java
+<<<<<<< SOURCE
+    MolangParserImpl(final @NotNull MolangLexer lexer) {
+        this.lexer = requireNonNull(lexer, "lexer");
+    }
+=======
+    MolangParserImpl(final @NotNull MolangLexer lexer) {
+        this(lexer, ParserDialect.MODERN);
+    }
+
+    MolangParserImpl(MolangLexer lexer, ParserDialect dialect) {
+        this.lexer = requireNonNull(lexer, "lexer");
+        this.dialect = requireNonNull(dialect, "dialect");
+    }
+>>>>>>> REPLACEMENT
+
+file: org/redlance/mocha/parser/MolangParserImpl.java
+<<<<<<< SOURCE
+                final int ternaryPrecedence = BinaryExpression.Op.CONDITIONAL.precedence();
+=======
+                final int ternaryPrecedence = ParserDialect.current().precedence(BinaryExpression.Op.CONDITIONAL);
+>>>>>>> REPLACEMENT
+
+file: org/redlance/mocha/parser/MolangParserImpl.java
+<<<<<<< SOURCE
+Expression compoundExpression = MolangParserImpl.parseCompoundExpression(lexer, ternaryPrecedence - 1);
+=======
+Expression compoundExpression = MolangParserImpl.parseCompoundExpression(lexer,
+                            ParserDialect.current().legacyTernary() ? ternaryPrecedence : ternaryPrecedence - 1);
+>>>>>>> REPLACEMENT
+
+file: org/redlance/mocha/parser/MolangParserImpl.java
+<<<<<<< SOURCE
+            case SLASH: op = BinaryExpression.Op.DIV; break;
+=======
+            case SLASH: op = BinaryExpression.Op.DIV; break;
+            case PERCENT: op = BinaryExpression.Op.MOD; break;
+            case CARET: op = BinaryExpression.Op.POW; break;
+>>>>>>> REPLACEMENT
+
+file: org/redlance/mocha/parser/MolangParserImpl.java
+<<<<<<< SOURCE
+        final int precedence = op.precedence();
+=======
+        final int precedence = ParserDialect.current().precedence(op);
+>>>>>>> REPLACEMENT
+
+file: org/redlance/mocha/parser/MolangParserImpl.java
+<<<<<<< SOURCE
+        final Expression expr = next0();
+        current = expr;
+        return expr;
+=======
+        ParserDialect previous = ParserDialect.enter(dialect);
+        try {
+            final Expression expr = next0();
+            current = expr;
+            return expr;
+        } finally {
+            ParserDialect.restore(previous);
+        }
+>>>>>>> REPLACEMENT
+
+file: org/redlance/mocha/parser/MolangParserImpl.java
+<<<<<<< SOURCE
+            case LBRACKET: { // ARRAY ACCESS EXPRESSION: "left["
+=======
+            case DOT: {
+                if (left == null) return null;
+                Token property = lexer.next();
+                if (property.kind() != TokenKind.IDENTIFIER || property.value() == null) {
+                    throw new ParseException("Expected a field name after dot", lexer.cursor());
+                }
+                lexer.next();
+                return new AccessExpression(left, property.value());
+            }
+            case LBRACKET: { // ARRAY ACCESS EXPRESSION: "left["
+>>>>>>> REPLACEMENT
+
+file: org/redlance/mocha/parser/MolangParserImpl.java
+<<<<<<< SOURCE
+            if (kind != TokenKind.LPAREN && kind != TokenKind.LBRACKET) {
+=======
+            if (kind != TokenKind.LPAREN && kind != TokenKind.LBRACKET && kind != TokenKind.DOT) {
+>>>>>>> REPLACEMENT

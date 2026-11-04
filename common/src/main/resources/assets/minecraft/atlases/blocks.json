@@ -1,0 +1,6 @@
+{
+    "sources": [
+        { "type": "kltyton_bedrock_runtime:bedrock_terrain" },
+        { "type": "kltyton_bedrock_runtime:geometry_particles" }
+    ]
+}

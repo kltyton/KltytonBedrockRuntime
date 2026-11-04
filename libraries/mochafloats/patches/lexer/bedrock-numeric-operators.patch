@@ -1,0 +1,21 @@
+# Bedrock resource-version syntax and extended numeric operators.
+artifact: lexer
+upstream: 6.1.1
+file: org/redlance/mocha/lexer/TokenKind.java
+<<<<<<< SOURCE
+    SEMICOLON;
+=======
+    SEMICOLON,
+
+    PERCENT,
+    CARET;
+>>>>>>> REPLACEMENT
+
+file: org/redlance/mocha/lexer/MolangLexerImpl.java
+<<<<<<< SOURCE
+                case '/': tokenKind = TokenKind.SLASH; break;
+=======
+                case '/': tokenKind = TokenKind.SLASH; break;
+                case '%': tokenKind = TokenKind.PERCENT; break;
+                case '^': tokenKind = TokenKind.CARET; break;
+>>>>>>> REPLACEMENT

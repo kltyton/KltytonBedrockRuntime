@@ -3,7 +3,7 @@
 ## Capture / 捕获
 
 - Vanilla `ModelPart` cubes are captured after animation setup. / 原版 `ModelPart` cube 在动画设置完成后捕获。
-- GeckoLib cubes are captured through optional GeckoLib render events; GeckoLib remains optional. / GeckoLib cube 通过可选渲染事件捕获，GeckoLib 仍为可选依赖。
+- GeckoLib cubes are captured through GeckoLib render events; GeckoLib is a required dependency. / GeckoLib cube 通过 GeckoLib 渲染事件捕获；GeckoLib 是必需依赖。
 - A cube is recorded only when its entity implements `BoneHitboxEntity` and its `ObbBoneKey` matches the entity's mandatory registration method. / 只有实体实现 `BoneHitboxEntity` 且 `ObbBoneKey` 命中强制注册方法时才会记录 cube。
 - `ALL`, `BASE`, and `HUMAN_BASE` are selectors, not pre-authored hitbox dimensions. `HUMAN_BASE` adds both held items to the six `BASE` body parts and is registered by the built-in player mixin; other entities opt in explicitly. / `ALL`、`BASE` 与 `HUMAN_BASE` 都是选择器，不是手写碰撞尺寸；`HUMAN_BASE` 在六个 `BASE` 身体部位外加入左右手持物，内置玩家 Mixin 已注册该预设，其他实体需显式接入。
 
@@ -24,11 +24,11 @@ The first-person player reuses the entity renderer's third-person body/arm pose 
 The camera ray is transformed into every candidate OBB's local space. The nearest exact local-box hit becomes the selected bone. The outline uses the same pose and local bounds, so selection and rendering share one transform path. / 相机射线会变换到每个候选 OBB 的本地空间，最近的精确本地盒命中成为选中骨骼。轮廓使用同一姿态和本地边界，因此选择与渲染共用一条变换路径。
 
 - Crosshair OBB display is off by default. / 准星 OBB 默认关闭。
-- Enable it through `config/bonehitboxlib-client.toml`, the hold key, or F3+B. / 可通过客户端配置、按住键位或 F3+B 开启。
+- Enable it through `config/kltyton_bedrock_runtime-client.toml`, the hold key, or F3+B. / 可通过客户端配置、按住键位或 F3+B 开启。
 - Fabric and NeoForge both register the default-unbound hold key in Controls. / Fabric 与 NeoForge 都会把默认未绑定按住键注册到控制设置。
 - Ordinary entities that do not implement `BoneHitboxEntity` never display library OBBs. / 未实现接口的普通实体不会显示库 OBB。
 
-When `bonehitboxlib$onlyHitPartTurnsRed()` is true, a client attack suppresses the full-body hurt overlay and refreshes the selected cube's red overlay. GeckoLib suppression is registered only when GeckoLib is present. / 当该方法返回 true 时，客户端攻击会抑制全身受击红色并刷新选中 cube 的红色 overlay；GeckoLib 抑制逻辑只在 GeckoLib 存在时注册。
+When `kltyton_bedrock_runtime$onlyHitPartTurnsRed()` is true, a client attack suppresses the full-body hurt overlay and refreshes the selected cube's red overlay. GeckoLib suppression is registered during client bootstrap. / 当该方法返回 true 时，客户端攻击会抑制全身受击红色并刷新选中 cube 的红色 overlay；GeckoLib 抑制逻辑在客户端引导阶段注册。
 
 ## Package Layout / 包分类
 
