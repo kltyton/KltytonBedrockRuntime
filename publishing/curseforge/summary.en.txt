@@ -1,1 +1,0 @@
-A GeckoLib extension for Bedrock models, animation graphs, particles, Molang and model-based collision.

@@ -1,6 +1,6 @@
 # Kltyton Bedrock Runtime
 
-<p align="center"><img src="publishing/curseforge/assets/icon.png" alt="Kltyton Bedrock Runtime" width="160"></p>
+<p align="center"><img src="icon.png" alt="Kltyton Bedrock Runtime" width="160"></p>
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
