@@ -25,6 +25,7 @@ import com.kltyton.bedrockruntime.api.entity.BoneHitboxEntity;
 import com.kltyton.bedrockruntime.api.geckolib.state.GeoObbAnimationState;
 import com.kltyton.bedrockruntime.api.state.runtime.ObbBoneState;
 import com.kltyton.bedrockruntime.client.config.BoneHitboxClientOptions;
+import com.kltyton.bedrockruntime.config.common.BoneHitboxConfig;
 import com.kltyton.bedrockruntime.client.geometry.bounds.PartBounds;
 import com.kltyton.bedrockruntime.network.protocol.BoneHitboxNetworking;
 import com.kltyton.bedrockruntime.network.payload.contact.ObbContactReportPayload;
@@ -245,6 +246,14 @@ public abstract class BonePartSelectionLogic {
     public static boolean shouldRenderOutline(VisualPartId id) {
         Minecraft minecraft = Minecraft.getInstance();
         boolean renderAllDebugObbs = BoneHitboxClientOptions.shouldRenderDebugObbs(minecraft);
+        if (renderAllDebugObbs && !BoneHitboxConfig.showPlayerDebugObbs() && minecraft.level != null) {
+            for (Player player : minecraft.level.players()) {
+                if (id.ownerKey().equals(VisualPartId.ownerKey(player))) {
+                    renderAllDebugObbs = false;
+                    break;
+                }
+            }
+        }
         synchronized (LOCK) {
             return renderAllDebugObbs || id.equals(selectedPart) && BoneHitboxClientOptions.shouldRenderCrosshairObb(minecraft);
         }

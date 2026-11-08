@@ -25,6 +25,7 @@ The camera ray is transformed into every candidate OBB's local space. The neares
 
 - Crosshair OBB display is off by default. / 准星 OBB 默认关闭。
 - Enable it through `config/kltyton_bedrock_runtime-client.toml`, the hold key, or F3+B. / 可通过客户端配置、按住键位或 F3+B 开启。
+- Player part OBBs are hidden in F3+B by default. Set `client.showPlayerDebugObbs = true` in `config/kltyton_bedrock_runtime-client.toml` to show them. / 玩家部位 OBB 默认不随 F3+B 显示；在客户端配置中将 `client.showPlayerDebugObbs` 设为 `true` 可开启。
 - Fabric and NeoForge both register the default-unbound hold key in Controls. / Fabric 与 NeoForge 都会把默认未绑定按住键注册到控制设置。
 - Ordinary entities that do not implement `BoneHitboxEntity` never display library OBBs. / 未实现接口的普通实体不会显示库 OBB。
 

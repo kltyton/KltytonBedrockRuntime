@@ -17,6 +17,7 @@ public final class BoneHitboxConfig {
     private static final ModConfigSpec.ConfigValue<List<? extends String>> BLOCK_MODEL_BLACKLIST;
 
     private static final ModConfigSpec.BooleanValue SHOW_CROSSHAIR_OBB;
+    private static final ModConfigSpec.BooleanValue SHOW_PLAYER_DEBUG_OBBS;
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -26,6 +27,10 @@ public final class BoneHitboxConfig {
                         "CN: 是否默认显示准星指向部位的 OBB。按住绑定键位时仍会临时显示。",
                         "EN: Whether to show the crosshair-targeted part OBB by default. Holding the bound key still shows it temporarily.")
                 .define("showCrosshairObb", false);
+        SHOW_PLAYER_DEBUG_OBBS = builder.comment(
+                "CN: 使用 F3+B 显示玩家的部位 OBB。",
+                "EN: Show player part OBBs when F3+B hitboxes are enabled.")
+                .define("showPlayerDebugObbs", false);
         builder.pop();
         CLIENT_SPEC = builder.build();
         ModConfigSpec.Builder common = new ModConfigSpec.Builder();
@@ -95,5 +100,10 @@ public final class BoneHitboxConfig {
         } catch (IllegalStateException exception) {
             return SHOW_CROSSHAIR_OBB.getDefault();
         }
+    }
+
+    public static boolean showPlayerDebugObbs() {
+        try { return SHOW_PLAYER_DEBUG_OBBS.getAsBoolean(); }
+        catch (IllegalStateException exception) { return SHOW_PLAYER_DEBUG_OBBS.getDefault(); }
     }
 }
