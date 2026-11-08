@@ -3,9 +3,7 @@ package com.kltyton.bedrockruntime.mixin.client.particle;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.renderer.texture.SpriteContents;
 import com.kltyton.bedrockruntime.client.particle.bedrock.BedrockPackResources;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -15,12 +13,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /** Blends transparent Bedrock frames within the native sprite upload path. */
 @Mixin(targets = "net.minecraft.client.renderer.texture.SpriteContents$InterpolationData")
 public abstract class BedrockTerrainInterpolationMixin {
-    @Shadow @Final SpriteContents field_21757;
     @Unique private boolean kltyton_bedrock_runtime$bedrockTerrain;
 
-    @Inject(method = "<init>", at = @At("RETURN"))
-    private void kltyton_bedrock_runtime$identifyTerrain(CallbackInfo ci) {
-        var id = field_21757.name();
+    @Inject(method = "<init>(Lnet/minecraft/client/renderer/texture/SpriteContents;)V", at = @At("RETURN"))
+    private void kltyton_bedrock_runtime$identifyTerrain(SpriteContents contents, CallbackInfo ci) {
+        var id = contents.name();
         kltyton_bedrock_runtime$bedrockTerrain = id.getNamespace().equals(BedrockPackResources.NAMESPACE)
                 && id.getPath().startsWith("bedrock_terrain/animated/");
     }

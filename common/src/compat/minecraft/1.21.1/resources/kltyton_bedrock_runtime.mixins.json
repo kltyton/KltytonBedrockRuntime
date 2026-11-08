@@ -76,6 +76,7 @@
         "client.render.HeldItemOutlineMixin",
         "client.render.BlockOutlineMixin",
         "client.render.ModelPartCaptureMixin",
+        "client.render.EmfModelPartCaptureMixin",
         "client.render.ItemRendererCaptureMixin",
         "client.render.PlayerRendererAccessor",
         "client.render.GeoControllerClockMixin",

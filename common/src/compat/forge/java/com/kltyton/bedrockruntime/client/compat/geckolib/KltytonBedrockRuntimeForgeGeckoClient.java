@@ -2,6 +2,7 @@ package com.kltyton.bedrockruntime.client.compat.geckolib;
 
 import com.kltyton.bedrockruntime.client.compat.geckolib.layer.GeckoBoneSelectionLayer;
 import com.kltyton.bedrockruntime.client.compat.geckolib.loading.EnhancedGeometryLoader;
+import com.kltyton.bedrockruntime.client.compat.geckolib.render.ForgeGeckoRenderHook;
 import software.bernie.geckolib.event.GeoRenderEvent;
 
 import net.minecraftforge.common.MinecraftForge;
@@ -22,6 +23,7 @@ public final class KltytonBedrockRuntimeForgeGeckoClient {
             return;
         }
 
+        ForgeGeckoRenderHook.verifyInstalled();
         eventsRegistered = true;
         EnhancedGeometryLoader.register();
         MinecraftForge.EVENT_BUS.addListener(KltytonBedrockRuntimeForgeGeckoClient::addEntityLayers);

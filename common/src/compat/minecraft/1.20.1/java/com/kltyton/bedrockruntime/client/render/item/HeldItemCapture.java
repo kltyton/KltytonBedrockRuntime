@@ -5,6 +5,7 @@ import com.kltyton.bedrockruntime.api.bone.builtin.ObbBuiltinBones;
 import com.kltyton.bedrockruntime.client.config.BoneHitboxClientOptions;
 import com.kltyton.bedrockruntime.client.geometry.bounds.PartBounds;
 import com.kltyton.bedrockruntime.client.render.outline.PartOutlineRenderer;
+import com.kltyton.bedrockruntime.client.render.vanilla.ModelPartObservations;
 import com.kltyton.bedrockruntime.client.selection.model.VisualPartId;
 import com.kltyton.bedrockruntime.client.selection.service.BonePartSelectionClient;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -52,11 +53,24 @@ public final class HeldItemCapture {
     }
 
     public static void modelPart(PoseStack.Pose pose, List<ModelPart.Cube> cubes) {
-        if (ACTIVE.get() == null) { return; }
+        Context context = ACTIVE.get();
+        if (context == null || context.observations.matchesLast("", pose.pose(), cubes)) { return; }
+        recordCubes(pose, cubes);
+    }
+
+    private static void recordCubes(PoseStack.Pose pose, List<ModelPart.Cube> cubes) {
         for (ModelPart.Cube cube : cubes) {
             record(pose, PartBounds.fromVanillaCube(pose.pose(), cube));
         }
     }
+
+    public static void modelPart(ModelPart part, PoseStack.Pose pose, List<ModelPart.Cube> cubes) {
+        Context context = ACTIVE.get();
+        if (context == null || !context.observations.add(part, "", pose.pose(), cubes)) { return; }
+        recordCubes(pose, cubes);
+    }
+
+    public static boolean isActive() { return ACTIVE.get() != null; }
 
     private static void record(PoseStack.Pose pose, PartBounds bounds) {
         Context context = ACTIVE.get();
@@ -99,6 +113,7 @@ public final class HeldItemCapture {
     private static final class Context {
         private final String owner;
         private final HumanoidArm arm;
+        private final ModelPartObservations observations = new ModelPartObservations();
         private int layer;
         private Context(String owner, HumanoidArm arm) { this.owner = owner; this.arm = arm; }
     }

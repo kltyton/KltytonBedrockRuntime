@@ -1,10 +1,7 @@
 package com.kltyton.bedrockruntime.mixin.client.geckolib;
 
-import com.kltyton.bedrockruntime.client.compat.geckolib.model.MeshGeoBone;
-import com.kltyton.bedrockruntime.client.model.mesh.MeshVertexEmitter;
-import com.kltyton.bedrockruntime.geometry.mesh.TriangleMesh;
-import com.kltyton.bedrockruntime.client.compat.geckolib.optimization.GL4CompiledGeometry;
 import com.kltyton.bedrockruntime.client.compat.geckolib.optimization.GeometryRenderScope;
+import com.kltyton.bedrockruntime.client.compat.geckolib.render.GeckoGeometryHooks;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -44,8 +41,7 @@ public interface GeckoMeshRenderMixin {
     private void kltyton_bedrock_runtime$renderCompiledGeometry(PoseStack poseStack, GeoBone bone, VertexConsumer buffer,
                                                      int light, int overlay, float red, float green, float blue,
                                                      float alpha, CallbackInfo callback) {
-        if (GeometryRenderScope.primary()
-                && GL4CompiledGeometry.intercept(bone, poseStack, buffer, red, green, blue, alpha, light, overlay)) {
+        if (GeckoGeometryHooks.intercept(poseStack, bone, buffer, light, overlay, red, green, blue, alpha)) {
             callback.cancel();
         }
     }
@@ -55,23 +51,6 @@ public interface GeckoMeshRenderMixin {
                                               int packedLight, int packedOverlay,
                                               float red, float green, float blue, float alpha,
                                               CallbackInfo callback) {
-        TriangleMesh mesh = MeshGeoBone.mesh(bone);
-        if (mesh == null || bone.isHidden()) {
-            return;
-        }
-        int color = (Math.max(0, Math.min(255, Math.round(alpha * 255.0F))) << 24)
-                | (Math.max(0, Math.min(255, Math.round(red * 255.0F))) << 16)
-                | (Math.max(0, Math.min(255, Math.round(green * 255.0F))) << 8)
-                | Math.max(0, Math.min(255, Math.round(blue * 255.0F)));
-        MeshVertexEmitter.emit(mesh, poseStack.last().pose(), poseStack.last().normal(),
-                color, packedLight, packedOverlay, MeshGeoBone.doubleSided(bone),
-                (x, y, z, packedColor, u, v, overlay, light, normalX, normalY, normalZ) ->
-                        buffer.vertex(x, y, z)
-                                .color(red, green, blue, alpha)
-                                .uv(u, v)
-                                .overlayCoords(overlay)
-                                .uv2(light)
-                                .normal(normalX, normalY, normalZ)
-                                .endVertex());
+        GeckoGeometryHooks.emit(poseStack, bone, buffer, packedLight, packedOverlay, red, green, blue, alpha);
     }
 }

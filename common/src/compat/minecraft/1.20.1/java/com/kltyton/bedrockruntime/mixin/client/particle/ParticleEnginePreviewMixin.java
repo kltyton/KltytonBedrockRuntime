@@ -3,12 +3,8 @@ package com.kltyton.bedrockruntime.mixin.client.particle;
 import com.google.common.collect.EvictingQueue;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.Camera;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleEngine;
-import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.texture.AbstractTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.resources.ResourceLocation;
@@ -76,15 +72,6 @@ public abstract class ParticleEnginePreviewMixin {
             }
         }
         return added;
-    }
-
-    @Inject(
-            method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;Lnet/minecraft/client/renderer/LightTexture;Lnet/minecraft/client/Camera;F)V",
-            at = @At("HEAD"))
-    private void kltyton_bedrock_runtime$evaluateWorldFrameExpressions(PoseStack poseStack, MultiBufferSource.BufferSource buffers,
-                                                                      LightTexture lightTexture, Camera camera, float partialTick,
-                                                                      CallbackInfo ci) {
-        MolangParticleManager.evaluateWorldFrameExpressions((ParticleEngine) (Object) this, partialTick);
     }
 
     @Inject(method = "reload", at = @At("RETURN"), cancellable = true)

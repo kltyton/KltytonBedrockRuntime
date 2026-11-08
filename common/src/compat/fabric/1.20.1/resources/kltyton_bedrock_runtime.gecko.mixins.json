@@ -1,0 +1,12 @@
+{
+    "required": true,
+    "minVersion": "0.8",
+    "package": "com.kltyton.bedrockruntime.mixin",
+    "compatibilityLevel": "JAVA_17",
+    "client": [
+        "client.geckolib.GeckoMeshRenderMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
+}
