@@ -2,18 +2,18 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-八个加载器目标均构建为 `com.kltyton` 组下的 `0.4.0` 版本。common 产物提供编译期 API 类型；加载器产物是运行时模组 JAR。
+八个加载器目标均构建为 `com.kltyton` 组下的 `0.4.1` 版本。common 产物提供编译期 API 类型；加载器产物是运行时模组 JAR。
 
 | Minecraft | 加载器 | Java | 目标工程 | 公共 API 坐标 | 加载器产物坐标 |
 | --- | --- | --- | --- | --- | --- |
-| 26.2 | Fabric | 25 | [fabric-26.2](../../targets/fabric-26.2) | `com.kltyton:kltyton_bedrock_runtime-common-26.2:0.4.0` | `com.kltyton:kltyton_bedrock_runtime-fabric-26.2:0.4.0` |
-| 26.2 | NeoForge | 25 | [neoforge-26.2](../../targets/neoforge-26.2) | `com.kltyton:kltyton_bedrock_runtime-common-26.2:0.4.0` | `com.kltyton:kltyton_bedrock_runtime-neoforge-26.2:0.4.0` |
-| 26.1.2 | Fabric | 25 | [fabric-26.1.2](../../targets/fabric-26.1.2) | `com.kltyton:kltyton_bedrock_runtime-common-26.1.2:0.4.0` | `com.kltyton:kltyton_bedrock_runtime-fabric-26.1.2:0.4.0` |
-| 26.1.2 | NeoForge | 25 | [neoforge-26.1.2](../../targets/neoforge-26.1.2) | `com.kltyton:kltyton_bedrock_runtime-common-26.1.2:0.4.0` | `com.kltyton:kltyton_bedrock_runtime-neoforge-26.1.2:0.4.0` |
-| 1.21.1 | Fabric | 21 | [fabric-1.21.1](../../targets/fabric-1.21.1) | `com.kltyton:kltyton_bedrock_runtime-common-1.21.1:0.4.0` | `com.kltyton:kltyton_bedrock_runtime-fabric-1.21.1:0.4.0` |
-| 1.21.1 | NeoForge | 21 | [neoforge-1.21.1](../../targets/neoforge-1.21.1) | `com.kltyton:kltyton_bedrock_runtime-common-1.21.1:0.4.0` | `com.kltyton:kltyton_bedrock_runtime-neoforge-1.21.1:0.4.0` |
-| 1.20.1 | Fabric | 17 | [fabric-1.20.1](../../targets/fabric-1.20.1) | `com.kltyton:kltyton_bedrock_runtime-common-1.20.1:0.4.0` | `com.kltyton:kltyton_bedrock_runtime-fabric-1.20.1:0.4.0` |
-| 1.20.1 | Forge | 17 | [forge-1.20.1](../../targets/forge-1.20.1) | `com.kltyton:kltyton_bedrock_runtime-common-1.20.1:0.4.0` | `com.kltyton:kltyton_bedrock_runtime-forge-1.20.1:0.4.0` |
+| 26.2 | Fabric | 25 | [fabric-26.2](../../targets/fabric-26.2) | `com.kltyton:kltyton_bedrock_runtime-common-26.2:0.4.1` | `com.kltyton:kltyton_bedrock_runtime-fabric-26.2:0.4.1` |
+| 26.2 | NeoForge | 25 | [neoforge-26.2](../../targets/neoforge-26.2) | `com.kltyton:kltyton_bedrock_runtime-common-26.2:0.4.1` | `com.kltyton:kltyton_bedrock_runtime-neoforge-26.2:0.4.1` |
+| 26.1.2 | Fabric | 25 | [fabric-26.1.2](../../targets/fabric-26.1.2) | `com.kltyton:kltyton_bedrock_runtime-common-26.1.2:0.4.1` | `com.kltyton:kltyton_bedrock_runtime-fabric-26.1.2:0.4.1` |
+| 26.1.2 | NeoForge | 25 | [neoforge-26.1.2](../../targets/neoforge-26.1.2) | `com.kltyton:kltyton_bedrock_runtime-common-26.1.2:0.4.1` | `com.kltyton:kltyton_bedrock_runtime-neoforge-26.1.2:0.4.1` |
+| 1.21.1 | Fabric | 21 | [fabric-1.21.1](../../targets/fabric-1.21.1) | `com.kltyton:kltyton_bedrock_runtime-common-1.21.1:0.4.1` | `com.kltyton:kltyton_bedrock_runtime-fabric-1.21.1:0.4.1` |
+| 1.21.1 | NeoForge | 21 | [neoforge-1.21.1](../../targets/neoforge-1.21.1) | `com.kltyton:kltyton_bedrock_runtime-common-1.21.1:0.4.1` | `com.kltyton:kltyton_bedrock_runtime-neoforge-1.21.1:0.4.1` |
+| 1.20.1 | Fabric | 17 | [fabric-1.20.1](../../targets/fabric-1.20.1) | `com.kltyton:kltyton_bedrock_runtime-common-1.20.1:0.4.1` | `com.kltyton:kltyton_bedrock_runtime-fabric-1.20.1:0.4.1` |
+| 1.20.1 | Forge | 17 | [forge-1.20.1](../../targets/forge-1.20.1) | `com.kltyton:kltyton_bedrock_runtime-common-1.20.1:0.4.1` | `com.kltyton:kltyton_bedrock_runtime-forge-1.20.1:0.4.1` |
 
 Maven 仓库地址为 `https://maven.sighs.cc/repository/maven-public/`。仓库过滤应仅包含目标实际使用的 common 与加载器模块。Fabric 需要匹配版本的 Fabric API 与 Forge Config API Port。GeckoLib 为必需依赖，请安装对应版本。
 

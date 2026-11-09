@@ -10,14 +10,14 @@ A Minecraft library for GeckoLib model geometry: animation graphs, Tree/Baked mo
 
 | Minecraft | Library version | Loader | Java | GeckoLib | Target project |
 | --- | --- | --- | --- | --- | --- |
-| 26.2 | 0.4.0 | Fabric | 25 | 5.5.3 | [fabric-26.2](targets/fabric-26.2) |
-| 26.2 | 0.4.0 | NeoForge | 25 | 5.5.3 | [neoforge-26.2](targets/neoforge-26.2) |
-| 26.1.2 | 0.4.0 | Fabric | 25 | 5.5.2 | [fabric-26.1.2](targets/fabric-26.1.2) |
-| 26.1.2 | 0.4.0 | NeoForge | 25 | 5.5.2 | [neoforge-26.1.2](targets/neoforge-26.1.2) |
-| 1.21.1 | 0.4.0 | Fabric | 21 | 4.9.2 | [fabric-1.21.1](targets/fabric-1.21.1) |
-| 1.21.1 | 0.4.0 | NeoForge | 21 | 4.9.2 | [neoforge-1.21.1](targets/neoforge-1.21.1) |
-| 1.20.1 | 0.4.0 | Fabric | 17 | 4.8.4 | [fabric-1.20.1](targets/fabric-1.20.1) |
-| 1.20.1 | 0.4.0 | Forge | 17 | 4.8.4 | [forge-1.20.1](targets/forge-1.20.1) |
+| 26.2 | 0.4.1 | Fabric | 25 | 5.5.3 | [fabric-26.2](targets/fabric-26.2) |
+| 26.2 | 0.4.1 | NeoForge | 25 | 5.5.3 | [neoforge-26.2](targets/neoforge-26.2) |
+| 26.1.2 | 0.4.1 | Fabric | 25 | 5.5.2 | [fabric-26.1.2](targets/fabric-26.1.2) |
+| 26.1.2 | 0.4.1 | NeoForge | 25 | 5.5.2 | [neoforge-26.1.2](targets/neoforge-26.1.2) |
+| 1.21.1 | 0.4.1 | Fabric | 21 | 4.9.2 | [fabric-1.21.1](targets/fabric-1.21.1) |
+| 1.21.1 | 0.4.1 | NeoForge | 21 | 4.9.2 | [neoforge-1.21.1](targets/neoforge-1.21.1) |
+| 1.20.1 | 0.4.1 | Fabric | 17 | 4.8.4 | [fabric-1.20.1](targets/fabric-1.20.1) |
+| 1.20.1 | 0.4.1 | Forge | 17 | 4.8.4 | [forge-1.20.1](targets/forge-1.20.1) |
 
 All targets share the version-neutral code in `common/src/main` and select Minecraft- and loader-specific adapters from `common/src/compat`. Each `targets/<loader>-<minecraft>` directory is an independent Gradle project. Use matching Minecraft, loader and library builds on the client and server.
 

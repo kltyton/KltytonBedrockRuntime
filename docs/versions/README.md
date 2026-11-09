@@ -2,18 +2,18 @@
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
-All eight loader targets build version `0.4.0` under `com.kltyton`. The common artifact exposes compile-time API types; the loader artifact is the runtime mod JAR.
+All eight loader targets build version `0.4.1` under `com.kltyton`. The common artifact exposes compile-time API types; the loader artifact is the runtime mod JAR.
 
 | Minecraft | Loader | Java | Target project | Common API coordinate | Loader artifact coordinate |
 | --- | --- | --- | --- | --- | --- |
-| 26.2 | Fabric | 25 | [fabric-26.2](../../targets/fabric-26.2) | `com.kltyton:kltyton_bedrock_runtime-common-26.2:0.4.0` | `com.kltyton:kltyton_bedrock_runtime-fabric-26.2:0.4.0` |
-| 26.2 | NeoForge | 25 | [neoforge-26.2](../../targets/neoforge-26.2) | `com.kltyton:kltyton_bedrock_runtime-common-26.2:0.4.0` | `com.kltyton:kltyton_bedrock_runtime-neoforge-26.2:0.4.0` |
-| 26.1.2 | Fabric | 25 | [fabric-26.1.2](../../targets/fabric-26.1.2) | `com.kltyton:kltyton_bedrock_runtime-common-26.1.2:0.4.0` | `com.kltyton:kltyton_bedrock_runtime-fabric-26.1.2:0.4.0` |
-| 26.1.2 | NeoForge | 25 | [neoforge-26.1.2](../../targets/neoforge-26.1.2) | `com.kltyton:kltyton_bedrock_runtime-common-26.1.2:0.4.0` | `com.kltyton:kltyton_bedrock_runtime-neoforge-26.1.2:0.4.0` |
-| 1.21.1 | Fabric | 21 | [fabric-1.21.1](../../targets/fabric-1.21.1) | `com.kltyton:kltyton_bedrock_runtime-common-1.21.1:0.4.0` | `com.kltyton:kltyton_bedrock_runtime-fabric-1.21.1:0.4.0` |
-| 1.21.1 | NeoForge | 21 | [neoforge-1.21.1](../../targets/neoforge-1.21.1) | `com.kltyton:kltyton_bedrock_runtime-common-1.21.1:0.4.0` | `com.kltyton:kltyton_bedrock_runtime-neoforge-1.21.1:0.4.0` |
-| 1.20.1 | Fabric | 17 | [fabric-1.20.1](../../targets/fabric-1.20.1) | `com.kltyton:kltyton_bedrock_runtime-common-1.20.1:0.4.0` | `com.kltyton:kltyton_bedrock_runtime-fabric-1.20.1:0.4.0` |
-| 1.20.1 | Forge | 17 | [forge-1.20.1](../../targets/forge-1.20.1) | `com.kltyton:kltyton_bedrock_runtime-common-1.20.1:0.4.0` | `com.kltyton:kltyton_bedrock_runtime-forge-1.20.1:0.4.0` |
+| 26.2 | Fabric | 25 | [fabric-26.2](../../targets/fabric-26.2) | `com.kltyton:kltyton_bedrock_runtime-common-26.2:0.4.1` | `com.kltyton:kltyton_bedrock_runtime-fabric-26.2:0.4.1` |
+| 26.2 | NeoForge | 25 | [neoforge-26.2](../../targets/neoforge-26.2) | `com.kltyton:kltyton_bedrock_runtime-common-26.2:0.4.1` | `com.kltyton:kltyton_bedrock_runtime-neoforge-26.2:0.4.1` |
+| 26.1.2 | Fabric | 25 | [fabric-26.1.2](../../targets/fabric-26.1.2) | `com.kltyton:kltyton_bedrock_runtime-common-26.1.2:0.4.1` | `com.kltyton:kltyton_bedrock_runtime-fabric-26.1.2:0.4.1` |
+| 26.1.2 | NeoForge | 25 | [neoforge-26.1.2](../../targets/neoforge-26.1.2) | `com.kltyton:kltyton_bedrock_runtime-common-26.1.2:0.4.1` | `com.kltyton:kltyton_bedrock_runtime-neoforge-26.1.2:0.4.1` |
+| 1.21.1 | Fabric | 21 | [fabric-1.21.1](../../targets/fabric-1.21.1) | `com.kltyton:kltyton_bedrock_runtime-common-1.21.1:0.4.1` | `com.kltyton:kltyton_bedrock_runtime-fabric-1.21.1:0.4.1` |
+| 1.21.1 | NeoForge | 21 | [neoforge-1.21.1](../../targets/neoforge-1.21.1) | `com.kltyton:kltyton_bedrock_runtime-common-1.21.1:0.4.1` | `com.kltyton:kltyton_bedrock_runtime-neoforge-1.21.1:0.4.1` |
+| 1.20.1 | Fabric | 17 | [fabric-1.20.1](../../targets/fabric-1.20.1) | `com.kltyton:kltyton_bedrock_runtime-common-1.20.1:0.4.1` | `com.kltyton:kltyton_bedrock_runtime-fabric-1.20.1:0.4.1` |
+| 1.20.1 | Forge | 17 | [forge-1.20.1](../../targets/forge-1.20.1) | `com.kltyton:kltyton_bedrock_runtime-common-1.20.1:0.4.1` | `com.kltyton:kltyton_bedrock_runtime-forge-1.20.1:0.4.1` |
 
 The Maven repository is `https://maven.sighs.cc/repository/maven-public/`. Keep repository filters scoped to the exact common and loader modules used by the target. Fabric requires its matching Fabric API and Forge Config API Port. GeckoLib is required on every target; install the matching version.
 

@@ -10,14 +10,14 @@
 
 | Minecraft | 库版本 | 加载器 | Java | GeckoLib | 目标工程 |
 | --- | --- | --- | --- | --- | --- |
-| 26.2 | 0.4.0 | Fabric | 25 | 5.5.3 | [fabric-26.2](targets/fabric-26.2) |
-| 26.2 | 0.4.0 | NeoForge | 25 | 5.5.3 | [neoforge-26.2](targets/neoforge-26.2) |
-| 26.1.2 | 0.4.0 | Fabric | 25 | 5.5.2 | [fabric-26.1.2](targets/fabric-26.1.2) |
-| 26.1.2 | 0.4.0 | NeoForge | 25 | 5.5.2 | [neoforge-26.1.2](targets/neoforge-26.1.2) |
-| 1.21.1 | 0.4.0 | Fabric | 21 | 4.9.2 | [fabric-1.21.1](targets/fabric-1.21.1) |
-| 1.21.1 | 0.4.0 | NeoForge | 21 | 4.9.2 | [neoforge-1.21.1](targets/neoforge-1.21.1) |
-| 1.20.1 | 0.4.0 | Fabric | 17 | 4.8.4 | [fabric-1.20.1](targets/fabric-1.20.1) |
-| 1.20.1 | 0.4.0 | Forge | 17 | 4.8.4 | [forge-1.20.1](targets/forge-1.20.1) |
+| 26.2 | 0.4.1 | Fabric | 25 | 5.5.3 | [fabric-26.2](targets/fabric-26.2) |
+| 26.2 | 0.4.1 | NeoForge | 25 | 5.5.3 | [neoforge-26.2](targets/neoforge-26.2) |
+| 26.1.2 | 0.4.1 | Fabric | 25 | 5.5.2 | [fabric-26.1.2](targets/fabric-26.1.2) |
+| 26.1.2 | 0.4.1 | NeoForge | 25 | 5.5.2 | [neoforge-26.1.2](targets/neoforge-26.1.2) |
+| 1.21.1 | 0.4.1 | Fabric | 21 | 4.9.2 | [fabric-1.21.1](targets/fabric-1.21.1) |
+| 1.21.1 | 0.4.1 | NeoForge | 21 | 4.9.2 | [neoforge-1.21.1](targets/neoforge-1.21.1) |
+| 1.20.1 | 0.4.1 | Fabric | 17 | 4.8.4 | [fabric-1.20.1](targets/fabric-1.20.1) |
+| 1.20.1 | 0.4.1 | Forge | 17 | 4.8.4 | [forge-1.20.1](targets/forge-1.20.1) |
 
 所有目标共享 `common/src/main` 中与版本和加载器无关的代码，并从 `common/src/compat` 选取 Minecraft 与加载器适配。每个 `targets/<loader>-<minecraft>` 目录都是独立 Gradle 工程。客户端与服务端应使用匹配的 Minecraft、加载器和库构建。
 
