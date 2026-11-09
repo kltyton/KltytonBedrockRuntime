@@ -2,7 +2,7 @@ package com.kltyton.bedrockruntime.client.particle.definition.molang;
 
 import java.util.Arrays;
 
-/** Frame identity and partial-tick scopes used by particle rendering. */
+/** Frame identity and partial-tick scopes for client rendering. */
 public final class RenderFrameContext {
     private static final ThreadLocal<FrameStack> FRAMES = new ThreadLocal<>();
     private static long frameIndex;

@@ -46,13 +46,13 @@ generator.addProvider(includeClient, new AutoShapeDataProvider(output, automatic
 服务端配置文件为 `kltyton_bedrock_runtime-server.toml`，由 Loader 同步到客户端。当前 Fabric 和 NeoForge 开发运行目录生成在 `config/`；1.20.1 Forge 生成在 `saves/<世界>/serverconfig/`。部署时编辑所属 Loader 实际生成的文件，保留其他配置项。
 
 ```toml
-vanillaSlantedBlockObb = true
+vanillaSlantedBlockObb = false
 forceAllBlockObb = false
 blockModelWhitelist = []
 blockModelBlacklist = []
 ```
 
-- `vanillaSlantedBlockObb`：默认开启，自动使用原版斜面模型几何。
+- `vanillaSlantedBlockObb`：默认关闭，开启后使用原版斜面模型几何。
 - `forceAllBlockObb`：默认关闭。开启后对允许的所有原版和模组方块启用 OBB 碰撞，优先使用已打包模型；模型缺失、特殊渲染器或无可解析元素时，将方块自身返回的碰撞分片转换为 OBB，保留原有范围。轴对齐几何也保留 OBB 表示。原本的空碰撞始终为空。
 - `blockModelWhitelist`：空列表不限制；非空时只有匹配方块可使用全局模型替换或强制 OBB。
 - `blockModelBlacklist`：优先于白名单，也约束强制模式。条目支持 `namespace:id`、`namespace:*` 和 `*`，例如 `minecraft:stone`、`minecraft:*`。不支持省略命名空间、方块标签或任意位置通配符。

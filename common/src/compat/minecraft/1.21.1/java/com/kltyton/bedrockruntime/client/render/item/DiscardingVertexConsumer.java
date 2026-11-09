@@ -4,7 +4,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 
 public class DiscardingVertexConsumer implements VertexConsumer {
     public static final DiscardingVertexConsumer INSTANCE = new DiscardingVertexConsumer();
-    protected DiscardingVertexConsumer() { }
+    public DiscardingVertexConsumer() { }
     @Override public VertexConsumer addVertex(float x, float y, float z) { return this; }
     @Override public VertexConsumer setColor(int r, int g, int b, int a) { return this; }
     @Override public VertexConsumer setUv(float u, float v) { return this; }

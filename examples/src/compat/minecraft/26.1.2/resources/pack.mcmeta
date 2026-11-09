@@ -1,7 +1,0 @@
-{
-    "pack": {
-        "description": "Kltyton Bedrock Runtime Development Examples",
-        "min_format": [84, 0],
-        "max_format": [101, 1]
-    }
-}

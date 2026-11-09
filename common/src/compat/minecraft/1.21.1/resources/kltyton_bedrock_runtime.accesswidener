@@ -2,3 +2,19 @@ accessWidener v2 named
 
 # SpellColorQuery's invoker uses the protected enum in its native method descriptor.
 accessible class net/minecraft/world/entity/monster/SpellcasterIllager$IllagerSpell
+
+# BedrockTerrainInterpolationMixin reads native ticker state and the exact interpolation buffer.
+# SpriteTicker exposes neither; keep renderer-specific interpolation and animation culling intact.
+accessible class net/minecraft/client/renderer/texture/SpriteContents$Ticker
+accessible field net/minecraft/client/renderer/texture/SpriteContents$Ticker frame I
+accessible field net/minecraft/client/renderer/texture/SpriteContents$Ticker subFrame I
+accessible field net/minecraft/client/renderer/texture/SpriteContents$Ticker animationInfo Lnet/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture;
+accessible field net/minecraft/client/renderer/texture/SpriteContents$Ticker interpolationData Lnet/minecraft/client/renderer/texture/SpriteContents$InterpolationData;
+accessible class net/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture
+accessible field net/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture frames Ljava/util/List;
+accessible field net/minecraft/client/renderer/texture/SpriteContents$AnimatedTexture frameRowSize I
+accessible class net/minecraft/client/renderer/texture/SpriteContents$FrameInfo
+accessible field net/minecraft/client/renderer/texture/SpriteContents$FrameInfo index I
+accessible field net/minecraft/client/renderer/texture/SpriteContents$FrameInfo time I
+accessible class net/minecraft/client/renderer/texture/SpriteContents$InterpolationData
+accessible field net/minecraft/client/renderer/texture/SpriteContents$InterpolationData activeFrame [Lcom/mojang/blaze3d/platform/NativeImage;

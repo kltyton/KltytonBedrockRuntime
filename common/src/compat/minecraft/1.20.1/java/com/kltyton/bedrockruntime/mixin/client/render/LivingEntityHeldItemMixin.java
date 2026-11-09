@@ -17,6 +17,7 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
+/** Captures held-item geometry through the existing render layer without submitting vertices. */
 @Mixin(LivingEntityRenderer.class)
 public abstract class LivingEntityHeldItemMixin<T extends LivingEntity, M extends EntityModel<T>> implements HeldItemPoseCapture {
     @Shadow protected M model;
@@ -75,7 +76,7 @@ public abstract class LivingEntityHeldItemMixin<T extends LivingEntity, M extend
             if (!entity.isSpectator()) {
                 for (RenderLayer<T, M> layer : layers) {
                     if (layer instanceof ItemInHandLayer<?, ?>) {
-                        layer.render(pose, type -> DiscardingVertexConsumer.INSTANCE, 15728880, entity,
+                        layer.render(pose, type -> new DiscardingVertexConsumer(), 15728880, entity,
                                 limbPosition, limbSpeed, partialTick, bob, headYaw, pitch);
                     }
                 }

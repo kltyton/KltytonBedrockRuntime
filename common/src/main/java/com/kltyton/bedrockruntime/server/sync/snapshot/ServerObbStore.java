@@ -34,7 +34,6 @@ import net.minecraft.util.Mth;
  * EN: Server-side read-only OBB bone snapshot table. It stores client model results; the public query layer can run SAT and ray queries on them.
  */
 public final class ServerObbStore {
-    private static final long MAX_STATE_AGE_TICKS = 40L;
     private static final Map<Key, EntityState> STATES = new ConcurrentHashMap<>();
 
     private ServerObbStore() {
@@ -124,6 +123,7 @@ public final class ServerObbStore {
             }
             STATES.put(key, new EntityState(
                     entity, player.getUUID(), gameTime,
+                    gameTime - payload.captureAgeTicks(),
                     previousGameTime,
                     payload.animationState(), Map.copyOf(animations),
                     List.copyOf(parts),
@@ -207,7 +207,7 @@ public final class ServerObbStore {
             return Optional.empty();
         }
         if (state.entity != entity || entity.isRemoved()
-                || entity.level().getGameTime() - state.gameTime > MAX_STATE_AGE_TICKS) {
+                || entity.level().getGameTime() - state.captureGameTime > ObbEntityPartsPayload.MAX_CAPTURE_AGE_TICKS) {
             STATES.remove(Key.of(entity.level(), entity.getId()), state);
             if (entity instanceof BoneHitboxEntity hitboxEntity) {
                 hitboxEntity.kltyton_bedrock_runtime$obbState().clearClientSnapshots();
@@ -259,7 +259,7 @@ public final class ServerObbStore {
                 .toList();
     }
 
-    private record EntityState(Entity entity, UUID reporter, long gameTime, long previousGameTime, GeoObbAnimationState animationState, Map<String, GeoObbAnimationState> animations,
+    private record EntityState(Entity entity, UUID reporter, long gameTime, long captureGameTime, long previousGameTime, GeoObbAnimationState animationState, Map<String, GeoObbAnimationState> animations,
             List<ServerObbPart> parts, List<ServerObbPart> previousParts,
             Vec3 position, Vec3 previousPosition, float yaw, float previousYaw) {
         private EntityState {

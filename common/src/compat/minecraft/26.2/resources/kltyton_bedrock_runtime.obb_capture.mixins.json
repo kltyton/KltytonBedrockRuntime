@@ -1,0 +1,13 @@
+{
+    "required": true,
+    "minVersion": "0.8",
+    "package": "com.kltyton.bedrockruntime.mixin.client.render",
+    "compatibilityLevel": "JAVA_25",
+    "client": [
+        "EntityRenderDispatcherObbCaptureMixin",
+        "LevelExtractorObbCaptureMixin"
+    ],
+    "injectors": {
+        "defaultRequire": 1
+    }
+}

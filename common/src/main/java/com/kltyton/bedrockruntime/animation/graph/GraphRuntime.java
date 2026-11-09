@@ -230,23 +230,33 @@ public final class GraphRuntime {
         }
         if (node instanceof GraphDefinition.AdditiveNode additive) {
             PoseBuffer base = evaluateNode(additive.base(), seconds, sampler);
-            PoseBuffer absoluteLayer = evaluateNode(additive.additive(), seconds, sampler);
+            GraphDefinition.MaskNode mask = definition.node(additive.additive()) instanceof GraphDefinition.MaskNode layerMask ? layerMask : null;
+            PoseBuffer absoluteLayer = evaluateNode(mask == null ? additive.additive() : mask.node(), seconds, sampler);
             PoseBuffer deltaLayer = additiveDeltaScratch.computeIfAbsent(id, ignored -> new PoseBuffer(binding));
             absoluteToBindDelta(absoluteLayer, deltaLayer);
             double weight = additive.weightParameter() == null
                     ? additive.weight()
                     : parameter(additive.weightParameter());
-            PoseBlender.additive(base, deltaLayer, (float) weight, out);
+            if (mask == null) {
+                PoseBlender.additive(base, deltaLayer, (float) weight, out);
+            } else {
+                PoseBlender.additiveMasked(base, deltaLayer, maskCache.computeIfAbsent(mask.id(), ignored -> buildMask(mask)), (float) weight, out);
+            }
             evaluatedNodes.add(id);
             return out;
         }
         if (node instanceof GraphDefinition.BlendNode blend) {
             PoseBuffer base = evaluateNode(blend.base(), seconds, sampler);
-            PoseBuffer input = evaluateNode(blend.input(), seconds, sampler);
+            GraphDefinition.MaskNode mask = definition.node(blend.input()) instanceof GraphDefinition.MaskNode layerMask ? layerMask : null;
+            PoseBuffer input = evaluateNode(mask == null ? blend.input() : mask.node(), seconds, sampler);
             double weight = blend.weightParameter() == null
                     ? blend.weight()
                     : parameter(blend.weightParameter());
-            PoseBlender.lerp(base, input, (float) weight, out);
+            if (mask == null) {
+                PoseBlender.lerp(base, input, (float) weight, out);
+            } else {
+                PoseBlender.lerpMasked(base, input, maskCache.computeIfAbsent(mask.id(), ignored -> buildMask(mask)), (float) weight, out);
+            }
             evaluatedNodes.add(id);
             return out;
         }

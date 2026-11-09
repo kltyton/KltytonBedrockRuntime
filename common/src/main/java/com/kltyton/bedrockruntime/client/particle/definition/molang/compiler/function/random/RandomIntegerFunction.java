@@ -54,8 +54,9 @@ public final class RandomIntegerFunction extends MathFunction {
         }
         float first = (float) this.valueA.get(instance);
         float second = (float) this.valueB.get(instance);
-        float min = first <= second ? first : second;
-        float max = first <= second ? second : first;
+        float min = (float) StrictMath.ceil(first <= second ? first : second);
+        float max = (float) StrictMath.floor(first <= second ? second : first);
+        requireIntegerRange(min, max);
         Random random;
         if (this.random != null) {
             this.random.setSeed((long) this.seed.get(instance));
@@ -68,6 +69,12 @@ public final class RandomIntegerFunction extends MathFunction {
 
     static float upperBound(float max) {
         return -0x1.0p-23F * max + 1.0F + max;
+    }
+
+    static void requireIntegerRange(float min, float max) {
+        if (!Float.isFinite(min) || !Float.isFinite(max) || min > max) {
+            throw new IllegalArgumentException("Random integer range must contain a finite integer");
+        }
     }
 
     static float sampleInteger(Random random, float min, float max, float upper) {

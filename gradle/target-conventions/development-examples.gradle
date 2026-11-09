@@ -5,7 +5,11 @@ if (!project.hasProperty('development_examples')) {
 }
 
 def templeRoot = file('../..')
-def examplesRoot = new File(templeRoot, 'examples')
+def configuredExamplesRoot = providers.gradleProperty('development_examples_root').orNull
+def examplesRoot = configuredExamplesRoot == null ? new File(templeRoot, 'examples') : file(configuredExamplesRoot)
+if (!examplesRoot.isDirectory()) {
+    throw new GradleException('Development examples not found; set -Pdevelopment_examples_root to their directory.')
+}
 def family = minecraft_version.startsWith('26.') ? '26' : 'legacy'
 def layers = [
         new File(examplesRoot, 'src/main'),
@@ -55,14 +59,32 @@ def generateExampleAssets = tasks.register('generateDevelopmentExampleAssets') {
             }
         }
         javax.imageio.ImageIO.write(image, 'png', file)
+        def dot = new java.awt.image.BufferedImage(8, 8, java.awt.image.BufferedImage.TYPE_INT_ARGB)
+        for (int y = 0; y < 8; y++) for (int x = 0; x < 8; x++) dot.setRGB(x, y, 0xFFFFFFFF as int)
+        def particleTexture = output.get().file('bedrock-pack/textures/particle/kbr_dot.png').asFile
+        particleTexture.parentFile.mkdirs()
+        javax.imageio.ImageIO.write(dot, 'png', particleTexture)
     }
+}
+
+tasks.register('prepareDevelopmentExamplePack', Zip) {
+    dependsOn generateExampleAssets
+    from(new File(examplesRoot, 'bedrock-pack'))
+    from(layout.buildDirectory.dir('generated/development-examples/bedrock-pack'))
+    archiveFileName = 'kbr_particle_demo.mcpack'
+    destinationDirectory = layout.buildDirectory.dir('development-packs')
 }
 
 def examples = sourceSets.create('developmentExamples')
 examples.java.setSrcDirs(javaDirectories)
 examples.resources.setSrcDirs(resourceDirectories)
-examples.resources.srcDir(generateExampleAssets)
+examples.resources.srcDir(layout.buildDirectory.dir('generated/development-examples'))
+tasks.named(examples.processResourcesTaskName) {
+    dependsOn generateExampleAssets
+    exclude 'bedrock-pack/**'
+}
 examples.compileClasspath += sourceSets.main.output
+examples.compileClasspath += project(':common').sourceSets.main.output
 examples.runtimeClasspath += sourceSets.main.output
 examples.compileClasspath += configurations.compileClasspath
 examples.runtimeClasspath += configurations.runtimeClasspath
@@ -93,6 +115,9 @@ def exampleProperties = [
         geckolib_version           : geckolib_version,
         java_version               : java_version
 ]
+if (loader == 'fabric') {
+    exampleProperties.fabric_minecraft_version_range = property('fabric_minecraft_version_range')
+}
 tasks.named('processDevelopmentExamplesResources') {
     duplicatesStrategy = org.gradle.api.file.DuplicatesStrategy.EXCLUDE
     inputs.properties(exampleProperties)
@@ -102,15 +127,13 @@ tasks.named('processDevelopmentExamplesResources') {
 }
 
 if (loader == 'fabric') {
+    sourceSets.main.runtimeClasspath += examples.output
     loom.mods {
         'kltyton_bedrock_runtime_examples' {
             sourceSet examples
         }
     }
 } else if (loader == 'forge') {
-    mixin {
-        config('kltyton_bedrock_runtime_examples.mixins.json')
-    }
     legacyForge.mods {
         'kltyton_bedrock_runtime_examples' {
             sourceSet examples

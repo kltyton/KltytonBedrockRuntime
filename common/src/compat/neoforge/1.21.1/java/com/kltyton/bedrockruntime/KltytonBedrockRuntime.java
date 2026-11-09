@@ -60,7 +60,7 @@ public final class KltytonBedrockRuntime {
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {
-        event.registrar("3")
+        event.registrar("4")
                 .playToServer(ObbPartSelectionPayload.TYPE, ObbPartSelectionPayload.CODEC,
                         (payload, context) -> BoneHitboxServerNetwork.handlePartSelection(payload, (ServerPlayer) context.player()))
                 .playToServer(ObbEntityPartsPayload.TYPE, ObbEntityPartsPayload.CODEC,

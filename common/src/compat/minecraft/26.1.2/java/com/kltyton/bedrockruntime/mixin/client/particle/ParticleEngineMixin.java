@@ -68,13 +68,6 @@ public abstract class ParticleEngineMixin implements ParticleEnginePreviewOwner,
         return added;
     }
 
-    @WrapOperation(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/particle/ParticleGroup;add(Lnet/minecraft/client/particle/Particle;)Z"))
-    private boolean kltyton_bedrock_runtime$releaseRejected(ParticleGroup<?> group, Particle particle, Operation<Boolean> original) {
-        boolean added = original.call(group, particle);
-        if (!added && particle instanceof ParticleAdmission tracked) tracked.kltyton_bedrock_runtime$released();
-        return added;
-    }
-
     @Inject(method = "extract", at = @At("HEAD"))
     private void kltyton_bedrock_runtime$evaluatePerRender(ParticlesRenderState state, Frustum frustum, Camera camera,
                                                   float partialTick, CallbackInfo ci) {

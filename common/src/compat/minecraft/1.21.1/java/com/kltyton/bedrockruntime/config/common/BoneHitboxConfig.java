@@ -37,7 +37,7 @@ public final class BoneHitboxConfig {
         VANILLA_SLANTED_BLOCK_OBB = common.comment(
                         "CN: 对原版斜面方块使用已打包模型的 OBB 几何。此项为服务端配置，会同步到客户端。",
                         "EN: Use packaged model OBB geometry for vanilla slanted blocks. Server config; synchronized to clients.")
-                .define("vanillaSlantedBlockObb", true);
+                .define("vanillaSlantedBlockObb", false);
         FORCE_ALL_BLOCK_OBB = common.comment(
                         "CN: 强制将所有允许的方块碰撞转换为 OBB，优先使用已打包模型；无模型时保留方块自身的几何。空碰撞仍为空。",
                         "EN: Force OBB collision for every allowed block. Prefer packaged model geometry; otherwise retain the block's own geometry. Empty collision stays empty.")

@@ -16,6 +16,7 @@ import software.bernie.geckolib.loading.json.raw.LocatorValue;
 
 import java.util.Map;
 
+/** Stores per-animatable particle locator state and clears it when resources reload. */
 @Pseudo
 @Mixin(targets = "software.bernie.geckolib.animatable.instance.AnimatableInstanceCache", remap = false)
 public abstract class AnimatableInstanceCacheMixin implements IPSAnimatableInstanceCache {
@@ -25,11 +26,19 @@ public abstract class AnimatableInstanceCacheMixin implements IPSAnimatableInsta
     private Map<LocatorValue, GeckoLibHelper.LocatorState> kltyton_bedrock_runtime$transform;
 
     @Inject(method = "<init>", at = @At("TAIL"))
-    private void addRunner(CallbackInfo ci) {
-        GeckoLibHelper.addWeakReloadCallback(this, owner -> {
-            if (owner.kltyton_bedrock_runtime$cachedId != null) owner.kltyton_bedrock_runtime$cachedId.clear();
-            if (owner.kltyton_bedrock_runtime$transform != null) owner.kltyton_bedrock_runtime$transform.clear();
-        });
+    private void kltyton_bedrock_runtime$registerReloadCallback(CallbackInfo ci) {
+        GeckoLibHelper.<IPSAnimatableInstanceCache>addWeakReloadCallback(
+                this, IPSAnimatableInstanceCache::kltyton_bedrock_runtime$clearLocatorCache);
+    }
+
+    @Override
+    public void kltyton_bedrock_runtime$clearLocatorCache() {
+        if (kltyton_bedrock_runtime$cachedId != null) {
+            kltyton_bedrock_runtime$cachedId.clear();
+        }
+        if (kltyton_bedrock_runtime$transform != null) {
+            kltyton_bedrock_runtime$transform.clear();
+        }
     }
 
     @Override

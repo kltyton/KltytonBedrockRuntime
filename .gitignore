@@ -2,6 +2,7 @@
 build/
 out/
 runs/
+/targets/*/run/
 
 */build/
 */runs/

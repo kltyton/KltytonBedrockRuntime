@@ -485,6 +485,6 @@ public abstract class AutoPartShapeBlock extends HorizontalDirectionalBlock {
     protected void createBlockStateDefinition(
             StateDefinition.Builder<Block, BlockState> builder) {
         super.createBlockStateDefinition(builder);
-        builder.add(ORIGIN_X, ORIGIN_Y, ORIGIN_Z);
+        builder.add(FACING, ORIGIN_X, ORIGIN_Y, ORIGIN_Z);
     }
 }

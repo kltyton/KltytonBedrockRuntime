@@ -25,6 +25,8 @@ import com.kltyton.bedrockruntime.client.compat.geckolib.model.EnhancedBakedGeoM
 import com.kltyton.bedrockruntime.geometry.mesh.MeshCaptureData;
 import com.kltyton.bedrockruntime.client.render.outline.PartOutlineRenderer;
 import com.kltyton.bedrockruntime.client.selection.service.BonePartSelectionClient;
+import com.kltyton.bedrockruntime.client.selection.model.VisualPartEntityRenderState;
+import com.kltyton.bedrockruntime.client.render.capture.EntityCapturePose;
 import com.kltyton.bedrockruntime.client.selection.model.VisualPartId;
 import com.mojang.blaze3d.vertex.PoseStack;
 
@@ -63,7 +65,7 @@ public final class GeckoBoneSelectionLayer extends GeoRenderLayer {
     }
 
     private void captureBone(RenderPassInfo renderPassInfo, GeoBone bone, SubmitNodeCollector renderTasks) {
-        if (!(bone instanceof CuboidGeoBone cuboidBone)) {
+        if (!(bone instanceof CuboidGeoBone cuboidBone) || !visible(bone)) {
             return;
         }
         MeshCaptureData mesh = renderPassInfo.model() instanceof EnhancedBakedGeoModel enhanced
@@ -79,6 +81,8 @@ public final class GeckoBoneSelectionLayer extends GeoRenderLayer {
         }
 
         GeoObbAnimationState animationState = (GeoObbAnimationState) renderPassInfo.getOrDefaultGeckolibData(ANIMATION_STATE, GeoObbAnimationState.NONE);
+        EntityCapturePose capturePose = renderPassInfo.renderState() instanceof VisualPartEntityRenderState state
+                ? state.kltyton_bedrock_runtime$getCapturePose() : null;
         PoseStack poseStack = renderPassInfo.poseStack();
         poseStack.pushPose();
         bone.translateAwayFromPivotPoint(poseStack);
@@ -92,7 +96,7 @@ public final class GeckoBoneSelectionLayer extends GeoRenderLayer {
             PartBounds bounds = fromGeckoCube(poseStack.last().pose(), cube);
             if (bounds != null) {
                 VisualPartId id = VisualPartId.gecko(entityId, bone.name(), i);
-                boolean accepted = BonePartSelectionClient.record(id, bounds, animationState);
+                boolean accepted = BonePartSelectionClient.record(id, bounds, animationState, capturePose);
                 if (!accepted) {
                     poseStack.popPose();
                     continue;
@@ -107,9 +111,9 @@ public final class GeckoBoneSelectionLayer extends GeoRenderLayer {
 
             poseStack.popPose();
         }
-        if (mesh != null && (bone.frameSnapshot == null || !bone.frameSnapshot.isHidden())) {
+        if (mesh != null) {
             MeshPartCapture.capture(entityId, bone.name(), cuboidBone.cubes.length, mesh, poseStack.last().pose(),
-                    animationState, (id, bounds) -> {
+                    animationState, capturePose, (id, bounds) -> {
                         if (BonePartSelectionClient.shouldRenderOutline(id)) {
                             PartOutlineRenderer.submit(renderTasks, poseStack, bounds);
                         }
@@ -119,6 +123,14 @@ public final class GeckoBoneSelectionLayer extends GeoRenderLayer {
                     });
         }
         poseStack.popPose();
+    }
+
+    private static boolean visible(GeoBone bone) {
+        if (bone.frameSnapshot != null && bone.frameSnapshot.isHidden()) return false;
+        for (GeoBone parent = bone.parent(); parent != null; parent = parent.parent()) {
+            if (parent.frameSnapshot != null && parent.frameSnapshot.areChildrenHidden()) return false;
+        }
+        return true;
     }
 
     private static PartBounds fromGeckoCube(org.joml.Matrix4f pose, GeoCube cube) {

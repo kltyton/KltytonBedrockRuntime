@@ -112,6 +112,8 @@ EN: A collision key is built from dimension, sorted entity UUIDs, and both `ObbB
 
 CN：碰撞键由维度、排序后的实体 UUID 和两个 `ObbBoneKey` 组成，并为每个连续接触记录上报玩家 UUID。因此 A 客户端上报 `A -> B`、B 客户端上报 `B -> A` 时，只会产生一次 `BEGIN`、共享的 `STAY` 状态，以及所有上报者结束或超时后的一次 `END`。
 
+Each contact dispatches at most one `STAY` callback per server tick with a valid `STAY` report. Any current reporter can supply it; a reporter retained only by its timeout cannot block another client's callback. Reporter timeouts still determine when the final `END` occurs. / 每个接触在收到有效 `STAY` 的服务端 tick 最多派发一次 `STAY` 回调，任一当前上报者均可提供；仅因超时保留的旧上报者不会阻断其他客户端。所有上报者离开或超时后才结束接触。
+
 Directional attack contacts keep attacker and target order. They both cache the active attacking bone for later vanilla correlation and immediately dispatch the separate OBB-contact attack/hurt lifecycle. / 有方向的攻击接触保留攻击者/目标顺序；它既缓存活动攻击骨骼以关联后续原版攻击，也会立即派发独立的 OBB 接触攻击/受击生命周期。
 
 ## Vanilla Events vs OBB-Contact Events / 原版事件与 OBB 接触事件
@@ -254,6 +256,6 @@ For walkable slopes, the center-foot ray owns the support height. Corner samples
 
 ## Protocol and limits / 协议与限制
 
-Entity snapshot payloads now use `kltyton_bedrock_runtime:entity_parts_v3`; NeoForge transport uses version `3`. Both sides must run a matching build. Existing entity save keys remain unchanged. Server snapshot, contact, selection and skill tables clear on server shutdown. / 实体快照包升级为 `kltyton_bedrock_runtime:entity_parts_v3`，NeoForge 传输版本为 `3`，两端需使用匹配构建；实体存档键不变。服务端关闭时清除快照、接触、选择和技能运行表。
+Entity snapshot payloads use `kltyton_bedrock_runtime:entity_parts_v4`; Forge and NeoForge transports use version `4`. Both sides must run a matching build. Snapshots carry their capture age, bounded to 40 ticks; repeated logical ticks retain the last rendered local pose and apply current entity-root motion without advancing its animation. Resource reloads discard captured geometry. Existing entity save keys remain unchanged. Server snapshot, contact, selection and skill tables clear on server shutdown. / 实体快照使用 `kltyton_bedrock_runtime:entity_parts_v4`，Forge 与 NeoForge 传输版本为 `4`，两端需使用匹配构建。快照携带最多 40 tick 的采样年龄；同一渲染帧内的多个逻辑 tick 保留已采样的局部姿势，并应用当前实体根变换，不推进动画。资源重载会丢弃已捕获几何。实体存档键不变，服务端关闭时清除快照、接触、选择和技能运行表。
 
 Spatial broad-phase filtering and per-tick reuse reduce unnecessary pair checks; worst-case dense contacts remain quadratic. No worker thread reads mutable world state or render poses. / 空间粗筛和同 tick 复用减少无效比较，密集接触的最坏复杂度仍为平方级；没有把可变世界状态或渲染姿态交给工作线程。

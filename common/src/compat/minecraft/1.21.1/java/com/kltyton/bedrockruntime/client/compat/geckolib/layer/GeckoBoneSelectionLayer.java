@@ -13,6 +13,7 @@ import com.kltyton.bedrockruntime.api.geckolib.state.GeoObbAnimationState;
 import com.kltyton.bedrockruntime.client.compat.geckolib.skill.GeoAnimationSnapshots;
 import com.kltyton.bedrockruntime.client.geometry.bounds.PartBounds;
 import com.kltyton.bedrockruntime.client.geometry.capture.MeshPartCapture;
+import com.kltyton.bedrockruntime.client.render.capture.EntityCapturePose;
 import com.kltyton.bedrockruntime.client.compat.geckolib.model.MeshGeoBone;
 import com.kltyton.bedrockruntime.client.render.outline.PartOutlineRenderer;
 import com.kltyton.bedrockruntime.client.selection.service.BonePartSelectionClient;
@@ -43,6 +44,7 @@ public final class GeckoBoneSelectionLayer<T extends GeoAnimatable> extends GeoR
             MultiBufferSource output, VertexConsumer vertices, float partialTick, int light, int overlay) {
         Entity entity = entity(animatable);
         if (entity == null || bone.isHidden()) { return; }
+        EntityCapturePose capturePose = EntityCapturePose.sample(entity, partialTick);
         var states = GeoAnimationSnapshots.capture(entity);
         GeoObbAnimationState animation = states.stream().filter(GeoObbAnimationState::active).findFirst().orElse(GeoObbAnimationState.NONE);
         for (int index = 0; index < bone.getCubes().size(); index++) {
@@ -63,7 +65,7 @@ public final class GeckoBoneSelectionLayer<T extends GeoAnimatable> extends GeoR
             PartBounds bounds = builder.build();
             if (bounds != null) {
                 VisualPartId id = VisualPartId.gecko(entity.getId(), bone.getName(), index);
-                if (BonePartSelectionClient.record(id, bounds, animation)) {
+                if (BonePartSelectionClient.record(id, bounds, animation, capturePose)) {
                     if (BonePartSelectionClient.shouldRenderOutline(id)) { PartOutlineRenderer.submit(output, pose, bounds); }
                     if (BonePartSelectionClient.isDamageFlashing(id)) { PartOutlineRenderer.submitDamageFlash(output, pose, bounds); }
                 }
@@ -73,7 +75,7 @@ public final class GeckoBoneSelectionLayer<T extends GeoAnimatable> extends GeoR
         var mesh = MeshGeoBone.captureData(bone);
         if (mesh != null) {
             MeshPartCapture.capture(entity.getId(), bone.getName(), bone.getCubes().size(), mesh,
-                    pose.last().pose(), animation, (id, bounds) -> {
+                    pose.last().pose(), animation, capturePose, (id, bounds) -> {
                         if (BonePartSelectionClient.shouldRenderOutline(id)) { PartOutlineRenderer.submit(output, pose, bounds); }
                         if (BonePartSelectionClient.isDamageFlashing(id)) { PartOutlineRenderer.submitDamageFlash(output, pose, bounds); }
                     });

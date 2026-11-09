@@ -57,6 +57,12 @@ public record PartBounds(AABB renderBounds, AABB localBounds, VoxelShape localSh
                 new Matrix4f(renderToLocal).translate((float) -translation.x, (float) -translation.y, (float) -translation.z), mesh);
     }
 
+    public PartBounds transformRenderSpace(Matrix4f transform) {
+        Matrix4f pose = new Matrix4f(transform).mul(localToRender);
+        AABB bounds = ObbGeometry.fromLocalBounds(localBounds, pose).worldBounds();
+        return new PartBounds(bounds, localBounds, localShape, pose, new Matrix4f(pose).invert(), mesh);
+    }
+
     public Matrix4f localToWorld(Vec3 cameraPosition) {
         return new Matrix4f()
                 .translation((float) cameraPosition.x(), (float) cameraPosition.y(), (float) cameraPosition.z())

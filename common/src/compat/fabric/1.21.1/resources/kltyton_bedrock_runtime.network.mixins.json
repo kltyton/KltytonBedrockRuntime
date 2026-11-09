@@ -1,0 +1,8 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.kltyton.bedrockruntime.mixin.client.particle",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": ["ServerEntityParticleStateMixin"],
+  "injectors": {"defaultRequire": 1}
+}

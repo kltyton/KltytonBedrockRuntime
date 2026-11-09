@@ -47,8 +47,8 @@ public final class DieRollFunction extends MathFunction {
     @Override
     public double compute(MolangInstance instance) {
         float rolls = (float) this.rolls.get(instance);
-        float first = (float) StrictMath.floor((float) this.min.get(instance));
-        float second = (float) StrictMath.floor((float) this.max.get(instance));
+        float first = (float) this.min.get(instance);
+        float second = (float) this.max.get(instance);
         float min = first <= second ? first : second;
         float max = first <= second ? second : first;
         Random random;

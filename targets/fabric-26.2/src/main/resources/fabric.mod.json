@@ -20,7 +20,8 @@
     },
     "mixins": [
         "${mod_id}.mixins.json",
-        "${mod_id}.model.mixins.json"
+        "${mod_id}.model.mixins.json",
+        "${mod_id}.obb_capture.mixins.json"
     ],
     "depends": {
         "fabricloader": ">=${fabric_loader_version}",
@@ -28,6 +29,7 @@
         "fabric-key-mapping-api-v1": "*",
         "minecraft": "${fabric_minecraft_version_range}",
         "java": ">=${java_version}",
-        "geckolib": "=${geckolib_version}"
+        "geckolib": "=${geckolib_version}",
+        "forgeconfigapiport": ">=${forge_config_api_port_version}"
     }
 }

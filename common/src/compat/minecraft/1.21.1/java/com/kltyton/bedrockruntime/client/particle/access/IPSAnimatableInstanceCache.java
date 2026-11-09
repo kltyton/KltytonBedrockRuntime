@@ -14,6 +14,8 @@ public interface IPSAnimatableInstanceCache {
 
     @Nullable GeckoLibHelper.LocatorState kltyton_bedrock_runtime$getLocatorState(LocatorValue locator);
 
+    void kltyton_bedrock_runtime$clearLocatorCache();
+
     static IPSAnimatableInstanceCache of(AnimatableInstanceCache cache) {
         return (IPSAnimatableInstanceCache) cache;
     }

@@ -180,20 +180,19 @@ flowchart LR
     G --> H[client particle render]
 ```
 
-The development examples add a billboard effect and a model particle under `examples/src/main/resources`; they are compiled only with `-Pdevelopment_examples` and are excluded from release JARs. In-game, an operator can preview loaded effects with:
+In-game, an operator can preview a loaded particle effect by its ID:
 
 ```text
-/kltyton_bedrock_runtime add kltyton_bedrock_runtime_examples:example_billboard ~ ~1 ~
-/kltyton_bedrock_runtime add kltyton_bedrock_runtime_examples:example_model_particle ~ ~1 ~
+/kltyton_bedrock_runtime add <namespace>:<effect_id> ~ ~1 ~
 ```
 
-A client-side Java caller can use the same option type through the normal particle path (26.2 identifier API shown):
+A client-side Java caller can use the same option type through the normal particle path, given the loaded effect's `modNamespace` and `effectId` (26.2 identifier API shown):
 
 ```java
 ClientLevel level = Minecraft.getInstance().level;
 if (level != null) {
     level.addParticle(new MolangParticleOption(Identifier.fromNamespaceAndPath(
-                    "kltyton_bedrock_runtime_examples", "example_billboard")),
+                    modNamespace, effectId)),
             x, y, z, 0.0, 0.0, 0.0);
 }
 ```
@@ -205,13 +204,13 @@ See [animation, model, and extension behavior](docs/animation/extensions.md#part
 Edit the loader-generated server configuration, `kltyton_bedrock_runtime-server.toml`:
 
 ```toml
-vanillaSlantedBlockObb = true
+vanillaSlantedBlockObb = false
 forceAllBlockObb = false
 blockModelWhitelist = []
 blockModelBlacklist = []
 ```
 
-- `vanillaSlantedBlockObb`: use packaged model geometry for vanilla slanted blocks; enabled by default.
+- `vanillaSlantedBlockObb`: use packaged model geometry for vanilla slanted blocks; disabled by default.
 - `forceAllBlockObb`: enable OBB collision for all allowed blocks; disabled by default. Prefer packaged model elements and fall back to the block's own finite collision geometry. Originally empty collision stays empty.
 - `blockModelWhitelist`: an empty list imposes no restriction. A non-empty list limits the affected block IDs.
 - `blockModelBlacklist`: takes priority over the whitelist, including forced mode and library model blocks. Excluded library model OBBs use model AABBs.
@@ -242,7 +241,7 @@ From the repository root, the controller exposes per-target `build_<target>` tas
 .\gradlew.bat buildAllTargets
 ```
 
-On Linux or macOS, use `./gradlew` in place of `gradlew.bat`. Build outputs are in each target's `build/libs/`. The build generates vanilla block geometry from the pinned Minecraft assets. Existing authored runtime models, animations, particle definitions, model-particle descriptors and textures remain regular resources; no DataGen step creates particle resources. Development examples are loaded only when a target is invoked with `-Pdevelopment_examples` and are excluded from release JARs.
+On Linux or macOS, use `./gradlew` in place of `gradlew.bat`. Build outputs are in each target's `build/libs/`. The build generates vanilla block geometry from the pinned Minecraft assets. Existing authored runtime models, animations, particle definitions, model-particle descriptors and textures remain regular resources; no DataGen step creates particle resources. An external development examples directory can be loaded with `-Pdevelopment_examples` and `-Pdevelopment_examples_root=<path>`; it is excluded from release JARs.
 
 ## Operating boundaries
 

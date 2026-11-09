@@ -35,7 +35,7 @@ public final class BlendSpace1D {
         this.order = new int[sorted.length];
         for (int i = 0; i < sorted.length; i++) {
             this.order[i] = sorted[i];
-            if (i > 0 && Float.compare(this.positions[order[i - 1]], this.positions[order[i]]) == 0) {
+            if (i > 0 && this.positions[order[i - 1]] == this.positions[order[i]]) {
                 throw new IllegalArgumentException("Blend space 1D contains duplicate position "
                         + this.positions[order[i]]);
             }

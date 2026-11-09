@@ -20,11 +20,12 @@ import org.joml.Matrix4f;
  * EN: Entity OBB state extracted from the real client model pipeline and synchronized to the server.
  */
 public record ObbEntityPartsPayload(int entityId, GeoObbAnimationState animationState, List<Part> parts,
-        List<GeoObbAnimationState> controllerStates) {
+        List<GeoObbAnimationState> controllerStates, int captureAgeTicks) {
     public static final int MAX_PARTS = 384;
     public static final int MAX_CONTROLLERS = 64;
+    public static final int MAX_CAPTURE_AGE_TICKS = 40;
 
-    public static final ResourceLocation TYPE = Constants.id("entity_parts_v3");
+    public static final ResourceLocation TYPE = Constants.id("entity_parts_v4");
 
     public ObbEntityPartsPayload(int entityId, List<Part> parts) {
         this(entityId, GeoObbAnimationState.NONE, parts);
@@ -34,7 +35,15 @@ public record ObbEntityPartsPayload(int entityId, GeoObbAnimationState animation
         this(entityId, animationState, parts, animationState != null && animationState.active() ? List.of(animationState) : List.of());
     }
 
+    public ObbEntityPartsPayload(int entityId, GeoObbAnimationState animationState, List<Part> parts,
+            List<GeoObbAnimationState> controllerStates) {
+        this(entityId, animationState, parts, controllerStates, 0);
+    }
+
     public ObbEntityPartsPayload {
+        if (captureAgeTicks < 0 || captureAgeTicks > MAX_CAPTURE_AGE_TICKS) {
+            throw new IllegalArgumentException("Invalid OBB capture age: " + captureAgeTicks);
+        }
         animationState = animationState == null ? GeoObbAnimationState.NONE : animationState;
         controllerStates = List.copyOf(controllerStates);
         if (controllerStates.size() > MAX_CONTROLLERS) { throw new IllegalArgumentException("Too many animation controllers"); }

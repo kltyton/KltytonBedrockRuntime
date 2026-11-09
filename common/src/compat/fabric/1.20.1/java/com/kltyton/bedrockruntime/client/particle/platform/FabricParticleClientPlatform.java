@@ -31,7 +31,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.client.renderer.texture.atlas.SpriteSourceType;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
+
+import java.util.List;
 
 /** Fabric 1.20.1 client particle wiring. */
 public final class FabricParticleClientPlatform implements ParticleClientPlatform {
@@ -75,7 +78,8 @@ public final class FabricParticleClientPlatform implements ParticleClientPlatfor
         ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new ForwardingParticleReloadListener(
                 BedrockParticles.asResource("particle_effects"), MolangParticleEngine.INSTANCE));
         ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new ForwardingParticleReloadListener(
-                BedrockParticles.asResource("particle_models"), BedrockModelParticles.reloadListener()));
+                BedrockParticles.asResource("particle_models"), BedrockModelParticles.reloadListener(),
+                List.of(new ResourceLocation("geckolib", "models"))));
         registerClientReceivers();
         ClientTickEvents.START_CLIENT_TICK.register(client -> tick());
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> clearClientState());

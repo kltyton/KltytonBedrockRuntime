@@ -1,5 +1,6 @@
 package com.kltyton.bedrockruntime.client.particle.platform;
 
+import com.geckolib.cache.GeckoLibResources;
 import com.kltyton.bedrockruntime.client.particle.PSClientConfigs;
 import com.kltyton.bedrockruntime.client.particle.bedrock.BedrockBlockLight;
 import com.kltyton.bedrockruntime.client.particle.bedrock.BedrockSpriteSource;
@@ -61,7 +62,6 @@ public final class NeoForgeParticleClientPlatform implements ParticleClientPlatf
         PSClientConfigs.onLoad();
         BedrockModelParticles.initialize();
         NeoForgeGeometryModelLoading.register(eventBus);
-        eventBus.addListener(this::clientSetup);
         ParticleNetwork.installClient(new NeoClientTransport());
     }
 
@@ -89,13 +89,11 @@ public final class NeoForgeParticleClientPlatform implements ParticleClientPlatf
         event.registerSpecial(BedrockParticles.MOLANG, new MolangParticleInstance.Provider());
     }
 
-    private void clientSetup(net.neoforged.fml.event.lifecycle.FMLClientSetupEvent event) {
-        event.enqueueWork(ParticleRegistry::initializeDefaults);
-    }
-
     private void addReloadListeners(AddClientReloadListenersEvent event) {
+        ParticleRegistry.initializeDefaults();
         event.addListener(MolangParticleEngine.RELOADER_ID, MolangParticleEngine.INSTANCE);
         event.addListener(BedrockParticles.asResource("model_particles"), BedrockModelParticles.reloadListener());
+        event.addDependency(GeckoLibResources.RELOAD_LISTENER_ID, BedrockParticles.asResource("model_particles"));
     }
 
     private void clientTick(ClientTickEvent.Pre event) {

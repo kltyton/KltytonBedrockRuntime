@@ -180,20 +180,19 @@ flowchart LR
     G --> H[客户端粒子渲染]
 ```
 
-开发示例在 `examples/src/main/resources` 下增加了 billboard 效果和模型粒子；只有使用 `-Pdevelopment_examples` 时才会编译，且不会进入发行 JAR。游戏中可由管理员预览已加载效果：
+游戏中可由管理员按 ID 预览已加载的粒子效果：
 
 ```text
-/kltyton_bedrock_runtime add kltyton_bedrock_runtime_examples:example_billboard ~ ~1 ~
-/kltyton_bedrock_runtime add kltyton_bedrock_runtime_examples:example_model_particle ~ ~1 ~
+/kltyton_bedrock_runtime add <命名空间>:<效果ID> ~ ~1 ~
 ```
 
-客户端 Java 调用方可沿用普通粒子路径使用同一选项类型（下例为 26.2 标识符 API）：
+客户端 Java 调用方可使用已加载效果的 `modNamespace` 和 `effectId`，沿用普通粒子路径使用同一选项类型（下例为 26.2 标识符 API）：
 
 ```java
 ClientLevel level = Minecraft.getInstance().level;
 if (level != null) {
     level.addParticle(new MolangParticleOption(Identifier.fromNamespaceAndPath(
-                    "kltyton_bedrock_runtime_examples", "example_billboard")),
+                    modNamespace, effectId)),
             x, y, z, 0.0, 0.0, 0.0);
 }
 ```
@@ -205,13 +204,13 @@ if (level != null) {
 编辑加载器生成的服务端配置 `kltyton_bedrock_runtime-server.toml`：
 
 ```toml
-vanillaSlantedBlockObb = true
+vanillaSlantedBlockObb = false
 forceAllBlockObb = false
 blockModelWhitelist = []
 blockModelBlacklist = []
 ```
 
-- `vanillaSlantedBlockObb`：原版斜面方块使用已打包的模型几何，默认开启。
+- `vanillaSlantedBlockObb`：原版斜面方块使用已打包的模型几何，默认关闭。
 - `forceAllBlockObb`：为允许范围内的所有方块启用 OBB 碰撞，默认关闭。优先使用已打包模型元素，缺失时使用方块自身的有限碰撞几何；原本为空的碰撞保持为空。
 - `blockModelWhitelist`：空列表不限制范围；非空时仅允许匹配的方块 ID。
 - `blockModelBlacklist`：优先于白名单，同样约束强制模式与本库模型方块；被排除的本库模型 OBB 使用模型 AABB。
@@ -242,7 +241,7 @@ cd .\targets\neoforge-26.2
 .\gradlew.bat buildAllTargets
 ```
 
-Linux 或 macOS 使用 `./gradlew` 替代 `gradlew.bat`。产物位于各目标的 `build/libs/`。构建从锁定的 Minecraft 资源生成原版方块几何；已有手写或编辑器导出的运行时模型、动画和贴图仍作为普通资源维护。  粒子定义、模型粒子描述文件和贴图同样作为普通资源维护，不经过 DataGen。仅在目标使用 `-Pdevelopment_examples` 时加载开发示例，且示例不会进入发行 JAR。
+Linux 或 macOS 使用 `./gradlew` 替代 `gradlew.bat`。产物位于各目标的 `build/libs/`。构建从锁定的 Minecraft 资源生成原版方块几何；已有手写或编辑器导出的运行时模型、动画、粒子定义、模型粒子描述文件和贴图仍作为普通资源维护。可通过 `-Pdevelopment_examples` 和 `-Pdevelopment_examples_root=<路径>` 加载外部开发示例目录；示例不会进入发行 JAR。
 
 ## 运行边界
 

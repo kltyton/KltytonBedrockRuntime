@@ -17,4 +17,6 @@ loom.mods {
         sourceSet project(':common').sourceSets.main
     }
 }
+// The common API JAR excludes loader entrypoints; development runs need the full output directories.
+sourceSets.main.runtimeClasspath += project(':common').sourceSets.main.output
 apply from: file('../../gradle/target-conventions/publish.gradle')

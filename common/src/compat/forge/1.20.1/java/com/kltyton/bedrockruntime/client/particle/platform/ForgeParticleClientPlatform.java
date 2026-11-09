@@ -67,7 +67,6 @@ public final class ForgeParticleClientPlatform implements ParticleClientPlatform
         PSClientConfigs.onLoad();
         BedrockModelParticles.initialize();
         ForgeGeometryModelLoading.register(eventBus);
-        eventBus.addListener(this::clientSetup);
         eventBus.addListener(this::registerShaders);
         eventBus.addListener(this::registerParticleProviders);
         eventBus.addListener(this::addReloadListener);
@@ -93,10 +92,6 @@ public final class ForgeParticleClientPlatform implements ParticleClientPlatform
         }));
     }
 
-    private void clientSetup(net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent event) {
-        event.enqueueWork(ParticleRegistry::initializeDefaults);
-    }
-
     private void registerShaders(RegisterShadersEvent event) {
         try {
         event.registerShader(new ShaderInstance(event.getResourceProvider(),
@@ -118,6 +113,8 @@ public final class ForgeParticleClientPlatform implements ParticleClientPlatform
     }
 
     private void addReloadListener(RegisterClientReloadListenersEvent event) {
+        // Reload preparation can run concurrently with FML's queued client setup work.
+        ParticleRegistry.initializeDefaults();
         event.registerReloadListener(MolangParticleEngine.INSTANCE);
         event.registerReloadListener(BedrockModelParticles.reloadListener());
     }

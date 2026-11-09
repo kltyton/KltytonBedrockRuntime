@@ -6,6 +6,8 @@ license = "${license}" # Review your options at https://choosealicense.com/.
 config = "${mod_id}.mixins.json"
 [[mixins]]
 config = "${mod_id}.model.mixins.json"
+[[mixins]]
+config = "${mod_id}.network.mixins.json"
 [[mods]] #mandatory
 modId = "${mod_id}" #mandatory
 version = "${version}" #mandatory

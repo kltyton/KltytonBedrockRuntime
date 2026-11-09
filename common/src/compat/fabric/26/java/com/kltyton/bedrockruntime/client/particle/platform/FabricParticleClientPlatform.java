@@ -1,5 +1,6 @@
 package com.kltyton.bedrockruntime.client.particle.platform;
 
+import com.geckolib.cache.GeckoLibResources;
 import com.kltyton.bedrockruntime.client.particle.PSClientConfigs;
 import com.kltyton.bedrockruntime.client.particle.bedrock.BedrockBlockLight;
 import com.kltyton.bedrockruntime.client.particle.bedrock.BedrockSpriteSource;
@@ -54,6 +55,7 @@ public final class FabricParticleClientPlatform implements ParticleClientPlatfor
         ResourceLoader loader = ResourceLoader.get(PackType.CLIENT_RESOURCES);
         loader.registerReloadListener(MolangParticleEngine.RELOADER_ID, MolangParticleEngine.INSTANCE);
         loader.registerReloadListener(BedrockParticles.asResource("model_particles"), BedrockModelParticles.reloadListener());
+        loader.addListenerOrdering(GeckoLibResources.RELOAD_LISTENER_ID, BedrockParticles.asResource("model_particles"));
         loader.addListenerOrdering(ResourceReloaderKeys.Client.ATLAS, MolangParticleEngine.RELOADER_ID);
         loader.addListenerOrdering(ResourceReloaderKeys.Client.PARTICLES, MolangParticleEngine.RELOADER_ID);
         ParticleNetwork.installClient(new FabricClientTransport());

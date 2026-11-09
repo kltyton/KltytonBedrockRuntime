@@ -67,8 +67,8 @@ public record ObbGeometry(AABB localBounds, AABB worldBounds, Matrix4f localToWo
     }
 
     /**
-     * CN: 世界空间下归一化的 X/Y/Z 三个 OBB 主轴。
-     * EN: Normalized world-space X/Y/Z principal axes of this OBB.
+     * CN: 变换后归一化的本地 X/Y/Z 轴；含剪切的仿射变换不保证三轴正交。
+     * EN: Normalized transformed local X/Y/Z axes; affine shear can make them non-orthogonal.
      */
     public List<Vec3> worldAxes() {
         ObbProjection projection = ObbProjection.of(this);
@@ -129,7 +129,7 @@ public record ObbGeometry(AABB localBounds, AABB worldBounds, Matrix4f localToWo
         return vec3(result);
     }
 
-    /** CN: 从本地长方体和任意世界变换创建真正的 OBB。EN: Creates a true OBB from local bounds and an arbitrary world transform. */
+    /** CN: 从本地长方体和世界仿射变换创建几何快照。EN: Creates box geometry from local bounds and a world affine transform. */
     public static ObbGeometry fromLocalBounds(AABB localBounds, Matrix4f localToWorld) {
         Matrix4f transform = new Matrix4f(localToWorld);
         Matrix4f inverse = new Matrix4f(transform).invert();
@@ -238,65 +238,30 @@ public record ObbGeometry(AABB localBounds, AABB worldBounds, Matrix4f localToWo
         }
         ObbProjection first = ObbProjection.of(this);
         ObbProjection second = ObbProjection.of(other);
-        double[][] rotation = new double[3][3];
-        double[][] absoluteRotation = new double[3][3];
-        for (int i = 0; i < 3; i++) {
-            for (int j = 0; j < 3; j++) {
-                rotation[i][j] = first.axis(i).dot(second.axis(j));
-                absoluteRotation[i][j] = Math.abs(rotation[i][j]) + SAT_EPSILON;
-            }
-        }
-
         Vector3f centerDelta = new Vector3f(first.center()).sub(second.center());
-        double[] translated = {
-                centerDelta.dot(first.axis(0)),
-                centerDelta.dot(first.axis(1)),
-                centerDelta.dot(first.axis(2))
-        };
         OverlapTracker tracker = new OverlapTracker(centerDelta);
 
         for (int i = 0; i < 3; i++) {
-            double firstRadius = first.extent(i);
-            double secondRadius = second.extent(0) * absoluteRotation[i][0]
-                    + second.extent(1) * absoluteRotation[i][1]
-                    + second.extent(2) * absoluteRotation[i][2];
-            if (!tracker.test(first.axis(i), firstRadius + secondRadius - Math.abs(translated[i]))) {
-                return Optional.empty();
-            }
-        }
-
-        for (int j = 0; j < 3; j++) {
-            double firstRadius = first.extent(0) * absoluteRotation[0][j]
-                    + first.extent(1) * absoluteRotation[1][j]
-                    + first.extent(2) * absoluteRotation[2][j];
-            double secondRadius = second.extent(j);
-            double projection = Math.abs(translated[0] * rotation[0][j]
-                    + translated[1] * rotation[1][j]
-                    + translated[2] * rotation[2][j]);
-            if (!tracker.test(second.axis(j), firstRadius + secondRadius - projection)) {
+            Vector3f axis = first.faceNormal(i);
+            if (axis != null && !tracker.test(axis, projectedRadius(first, axis) + projectedRadius(second, axis)
+                    - Math.abs(centerDelta.dot(axis)))) {
                 return Optional.empty();
             }
         }
 
         for (int i = 0; i < 3; i++) {
-            int i1 = (i + 1) % 3;
-            int i2 = (i + 2) % 3;
+            Vector3f axis = second.faceNormal(i);
+            if (axis != null && !tracker.test(axis, projectedRadius(first, axis) + projectedRadius(second, axis)
+                    - Math.abs(centerDelta.dot(axis)))) {
+                return Optional.empty();
+            }
+        }
+
+        for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
-                int j1 = (j + 1) % 3;
-                int j2 = (j + 2) % 3;
-                double firstRadius = first.extent(i1) * absoluteRotation[i2][j]
-                        + first.extent(i2) * absoluteRotation[i1][j];
-                double secondRadius = second.extent(j1) * absoluteRotation[i][j2]
-                        + second.extent(j2) * absoluteRotation[i][j1];
-                double projection = Math.abs(translated[i2] * rotation[i1][j] - translated[i1] * rotation[i2][j]);
-                Vector3f axis = new Vector3f(first.axis(i)).cross(second.axis(j));
-                float axisLength = axis.length();
-                if (axisLength <= 1.0E-5F) {
-                    continue;
-                }
-                axis.div(axisLength);
-                double normalizedDepth = (firstRadius + secondRadius - projection) / axisLength;
-                if (!tracker.test(axis, normalizedDepth)) {
+                Vector3f axis = crossAxis(first.axis(i), second.axis(j));
+                if (axis != null && !tracker.test(axis, projectedRadius(first, axis) + projectedRadius(second, axis)
+                        - Math.abs(centerDelta.dot(axis)))) {
                     return Optional.empty();
                 }
             }
@@ -331,24 +296,21 @@ public record ObbGeometry(AABB localBounds, AABB worldBounds, Matrix4f localToWo
         Vector3f velocity = new Vector3f((float) movement.x(), (float) movement.y(), (float) movement.z());
         SweepTracker tracker = new SweepTracker(centerDelta, velocity);
         for (int i = 0; i < 3; i++) {
-            if (!tracker.test(first.axis(i), projectedRadius(first, first.axis(i)) + projectedRadius(second, first.axis(i)))) {
+            Vector3f axis = first.faceNormal(i);
+            if (axis != null && !tracker.test(axis, projectedRadius(first, axis) + projectedRadius(second, axis))) {
                 return Optional.empty();
             }
         }
         for (int i = 0; i < 3; i++) {
-            if (!tracker.test(second.axis(i), projectedRadius(first, second.axis(i)) + projectedRadius(second, second.axis(i)))) {
+            Vector3f axis = second.faceNormal(i);
+            if (axis != null && !tracker.test(axis, projectedRadius(first, axis) + projectedRadius(second, axis))) {
                 return Optional.empty();
             }
         }
         for (int i = 0; i < 3; i++) {
             for (int j = 0; j < 3; j++) {
-                Vector3f axis = new Vector3f(first.axis(i)).cross(second.axis(j));
-                float length = axis.length();
-                if (length <= 1.0E-5F) {
-                    continue;
-                }
-                axis.div(length);
-                if (!tracker.test(axis, projectedRadius(first, axis) + projectedRadius(second, axis))) {
+                Vector3f axis = crossAxis(first.axis(i), second.axis(j));
+                if (axis != null && !tracker.test(axis, projectedRadius(first, axis) + projectedRadius(second, axis))) {
                     return Optional.empty();
                 }
             }
@@ -360,6 +322,14 @@ public record ObbGeometry(AABB localBounds, AABB worldBounds, Matrix4f localToWo
         return projection.extentX * Math.abs(projection.axisX.dot(axis))
                 + projection.extentY * Math.abs(projection.axisY.dot(axis))
                 + projection.extentZ * Math.abs(projection.axisZ.dot(axis));
+    }
+
+    private static Vector3f crossAxis(Vector3f first, Vector3f second) {
+        double x = (double) first.y() * second.z() - (double) first.z() * second.y();
+        double y = (double) first.z() * second.x() - (double) first.x() * second.z();
+        double z = (double) first.x() * second.y() - (double) first.y() * second.x();
+        double length = Math.sqrt(x * x + y * y + z * z);
+        return length == 0.0 ? null : new Vector3f((float) (x / length), (float) (y / length), (float) (z / length));
     }
 
     private List<Vec3> vertices(Matrix4f transform) {
@@ -475,22 +445,18 @@ public record ObbGeometry(AABB localBounds, AABB worldBounds, Matrix4f localToWo
             };
         }
 
-        double extent(int index) {
-            return switch (index) {
-                case 0 -> extentX;
-                case 1 -> extentY;
-                case 2 -> extentZ;
-                default -> throw new IllegalArgumentException("Invalid OBB extent index: " + index);
-            };
+        Vector3f faceNormal(int index) {
+            return crossAxis(axis((index + 1) % 3), axis((index + 2) % 3));
         }
 
         private static AxisExtent axisExtent(Matrix4f matrix, float x, float y, float z, double localExtent) {
             Vector3f axis = matrix.transformDirection(x, y, z, new Vector3f());
-            float length = axis.length();
-            if (length <= 1.0E-6F) {
+            double length = Math.sqrt((double) axis.x() * axis.x()
+                    + (double) axis.y() * axis.y() + (double) axis.z() * axis.z());
+            if (length == 0.0) {
                 return new AxisExtent(new Vector3f(x, y, z), 0.0);
             }
-            axis.div(length);
+            axis.set((float) (axis.x() / length), (float) (axis.y() / length), (float) (axis.z() / length));
             return new AxisExtent(axis, localExtent * length);
         }
     }

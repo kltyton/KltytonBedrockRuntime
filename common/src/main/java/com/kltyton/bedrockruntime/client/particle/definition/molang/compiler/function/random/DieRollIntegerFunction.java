@@ -47,10 +47,10 @@ public final class DieRollIntegerFunction extends MathFunction {
     @Override
     public double compute(MolangInstance instance) {
         float rolls = (float) this.rolls.get(instance);
-        float first = (float) StrictMath.floor((float) this.min.get(instance));
-        float second = (float) StrictMath.floor((float) this.max.get(instance));
-        float min = first <= second ? first : second;
-        float max = first <= second ? second : first;
+        float first = (float) this.min.get(instance);
+        float second = (float) this.max.get(instance);
+        float min = (float) StrictMath.ceil(first <= second ? first : second);
+        float max = (float) StrictMath.floor(first <= second ? second : first);
         Random random;
         if (this.random != null) {
             this.random.setSeed((long) this.seed.get(instance));
@@ -59,6 +59,7 @@ public final class DieRollIntegerFunction extends MathFunction {
             random = ThreadLocalRandom.current();
         }
         int count = rolls >= 1.0F && rolls < 0x1.0p31F ? (int) rolls : 0;
+        if (count > 0) RandomIntegerFunction.requireIntegerRange(min, max);
         float upper = RandomIntegerFunction.upperBound(max);
         float sum = 0.0F;
         for (int i = 0; i < count; i++) {

@@ -3,6 +3,7 @@ package com.kltyton.bedrockruntime.client.particle.api;
 import com.kltyton.bedrockruntime.client.particle.api.event.ParticleEvents;
 
 import com.kltyton.bedrockruntime.client.particle.runtime.MolangParticleEngine;
+import com.kltyton.bedrockruntime.client.particle.runtime.MolangParticleInstance;
 
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.Particle;
@@ -63,6 +64,9 @@ public class RegisterCustomParticleTypeEvent {
         SPRITES.clear();
         SPRITE_TYPES.clear();
         boundSpriteIds = null;
+        Provider<MolangParticleInstance> molang = (emitter, preset, level, x, y, z) ->
+                new MolangParticleInstance(preset, level, x, y, z, level.getRandom());
+        PROVIDERS.put(BedrockParticles.MOLANG, molang);
         ParticleEvents.post(new RegisterCustomParticleTypeEvent());
     }
 

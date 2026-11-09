@@ -3,6 +3,61 @@ artifact: runtime
 upstream: 6.1.1
 file: org/redlance/mocha/runtime/ExpressionInterpreter.java
 <<<<<<< SOURCE
+            equality(false) // neq
+=======
+            equality(false), // neq
+            arithmetic((a, b) -> {
+                final float dividend = a.eval();
+                final float divisor = b.eval();
+                return divisor == 0 ? dividend : dividend % divisor;
+            }),
+            arithmetic((a, b) -> (float) Math.pow(a.eval(), b.eval()))
+>>>>>>> REPLACEMENT
+
+<<<<<<< SOURCE
+        return BINARY_EVALUATORS.get(expression.op().ordinal()).eval(
+=======
+        if (scope instanceof ContextualScope contextual) {
+            Value result = contextual.binary(expression, this);
+            if (result != null) return result;
+        }
+        return BINARY_EVALUATORS.get(expression.op().ordinal()).eval(
+>>>>>>> REPLACEMENT
+
+<<<<<<< SOURCE
+        final Value index = expression.index().visit(this);
+=======
+        final Value index = expression.index().visit(this);
+        if (scope instanceof ContextualScope contextual) return present(contextual.index(array, index, this));
+>>>>>>> REPLACEMENT
+
+<<<<<<< SOURCE
+                () -> a.visit(evaluator).getAsBoolean(),
+                () -> b.visit(evaluator).getAsBoolean()
+=======
+                () -> evaluator.truth(a.visit(evaluator)),
+                () -> evaluator.truth(b.visit(evaluator))
+>>>>>>> REPLACEMENT
+
+<<<<<<< SOURCE
+                if (conditionValue.getAsBoolean()) {
+=======
+                if (evaluator.truth(conditionValue)) {
+>>>>>>> REPLACEMENT
+
+<<<<<<< SOURCE
+                return Value.of(!value.getAsBoolean());
+=======
+                return Value.of(!truth(value));
+>>>>>>> REPLACEMENT
+
+<<<<<<< SOURCE
+        final Expression branch = conditionResult.getAsBoolean()
+=======
+        final Expression branch = truth(conditionResult)
+>>>>>>> REPLACEMENT
+
+<<<<<<< SOURCE
             (evaluator, a, b) -> { // arrow
                 final Value val = a.visit(evaluator);
 =======

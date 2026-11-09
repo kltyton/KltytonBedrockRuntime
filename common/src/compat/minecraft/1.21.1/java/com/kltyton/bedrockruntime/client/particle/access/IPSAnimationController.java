@@ -11,6 +11,8 @@ public interface IPSAnimationController {
 
     void kltyton_bedrock_runtime$setBonesWhichHasLocators(Collection<GeoBone> registeredBones);
 
+    void kltyton_bedrock_runtime$clearLocatorBones();
+
     static IPSAnimationController of(AnimationController<?> controller) {
         return (IPSAnimationController) controller;
     }

@@ -16,11 +16,12 @@ public final class ItemUseDurationQuery extends MathFunction {
 
     @Override
     public double compute(MolangInstance instance) {
-        if (!(instance.getAttachedEntity() instanceof LivingEntity entity)) return 0.0;
-        var mainHand = entity.getMainHandItem();
-        if (mainHand.isEmpty()) return 0.0;
-        int remaining = ItemUseDurations.remaining(entity);
-        return (float) (ItemUseDurations.maximum(mainHand, entity) - remaining) * 20.0F;
+        if (!(instance.getAttachedEntity() instanceof LivingEntity entity) || !entity.isUsingItem()) return 0.0;
+        var item = entity.getUseItem();
+        if (item.isEmpty()) return 0.0;
+        int maximum = ItemUseDurations.maximum(item, entity);
+        int remaining = ItemUseDurations.remainingActive(entity);
+        return Math.max(0, Math.min(maximum, maximum - remaining)) * 0.05F;
     }
 
     @Override public String getName() { return "query.item_in_use_duration"; }

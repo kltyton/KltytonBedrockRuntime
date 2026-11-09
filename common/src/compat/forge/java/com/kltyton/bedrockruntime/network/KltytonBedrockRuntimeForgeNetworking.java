@@ -12,7 +12,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 
 public final class KltytonBedrockRuntimeForgeNetworking {
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(Constants.id("main"),
-            () -> "3", "3"::equals, "3"::equals);
+            () -> "4", "4"::equals, "4"::equals);
     private KltytonBedrockRuntimeForgeNetworking() { }
 
     public static void register() {

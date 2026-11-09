@@ -2,6 +2,7 @@ package com.kltyton.bedrockruntime.client.particle.model.resource;
 
 import com.kltyton.bedrockruntime.client.particle.model.internal.ModelParticlePrepared;
 import com.kltyton.bedrockruntime.client.particle.model.runtime.ModelParticleTextures;
+import com.kltyton.bedrockruntime.client.selection.service.BonePartSelectionClient;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -31,6 +32,7 @@ public final class ModelParticleReloadListener implements PreparableReloadListen
                 .thenAcceptAsync(reload -> {
                     ModelParticleTextures.apply(reload.textures());
                     ModelParticleLoader.apply(reload.models());
+                    BonePartSelectionClient.invalidateRenderCaptures();
                 }, gameExecutor);
     }
 

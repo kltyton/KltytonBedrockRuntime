@@ -58,6 +58,11 @@ public final class ItemUseDurations {
                 }
             }
         }
+        return remainingActive(entity);
+    }
+
+    /** Uses the active hand's timer, without idle main-hand compatibility values. */
+    public static int remainingActive(LivingEntity entity) {
         int remaining = entity.getUseItemRemainingTicks();
         if (entity instanceof IItemUseTimer timer) {
             return timer.kltyton_bedrock_runtime$itemUseRemaining(remaining);

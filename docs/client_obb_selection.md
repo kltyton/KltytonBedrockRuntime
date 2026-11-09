@@ -9,6 +9,8 @@
 
 Each snapshot contains local bounds, an OBB-derived world broad-phase bound, local/world matrices, composable attributes, collision mode, and optional Geo animation state. Vanilla entity AABBs are not used to decide OBB-to-OBB contact. / 每个快照包含本地边界、由 OBB 推导的世界粗筛范围、本地/世界矩阵、可组合属性、碰撞模式及可选 Geo 动画状态；OBB 接触判定不使用原版实体 AABB。
 
+Affine box contact and translation sweeps use transformed face normals and edge cross products, including shear from nested nonuniform scale and rotation. Render captures retain the interpolated entity root used for that draw; tick reuse advances that root without advancing skeletal animation. / 仿射盒接触与平移扫掠使用变换后的面法线和边叉积，支持嵌套非均匀缩放与旋转形成的剪切。渲染捕获保留本次绘制的插值实体根姿势；tick 复用只补偿根运动，不推进骨骼动画。
+
 ## Culled model sampling / 被剔除模型的采样
 
 In 26.2, within 32 blocks, a culled `BoneHitboxEntity` is sampled to extend its culling bounds to its model bounds. The sample runs the real model and layer callbacks with a private `SubmitNodeStorage`; deferred draw tasks stay out of the active frame. Vanilla distance and frustum checks still control ordinary drawing using the extended bounds. Other versions keep their previous capture behavior. / 26.2 中，32 格内被视锥剔除的 `BoneHitboxEntity` 会被采样，并把剔除边界扩展到真实模型边界。采样使用私有 `SubmitNodeStorage` 运行模型和渲染层回调，延迟绘制任务不会进入当前帧。常规绘制仍由原版距离与视锥检查依据扩展后的边界决定。其他版本保持原有捕获行为。

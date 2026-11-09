@@ -61,7 +61,6 @@ public final class NeoForgeParticleClientPlatform implements ParticleClientPlatf
         PSClientConfigs.onLoad();
         BedrockModelParticles.initialize();
         NeoForgeGeometryModelLoading.register(eventBus);
-        eventBus.addListener(this::clientSetup);
         ParticleNetwork.installClient(new NeoClientTransport());
         ParticleClientDispatch.install((payload, context) ->
                 handleClientPayload(payload, (IPayloadContext) context));
@@ -98,11 +97,8 @@ public final class NeoForgeParticleClientPlatform implements ParticleClientPlatf
         event.registerSpecial(BedrockParticles.MOLANG, new MolangParticleInstance.Provider());
     }
 
-    private void clientSetup(net.neoforged.fml.event.lifecycle.FMLClientSetupEvent event) {
-        event.enqueueWork(ParticleRegistry::initializeDefaults);
-    }
-
     private void addReloadListener(RegisterClientReloadListenersEvent event) {
+        ParticleRegistry.initializeDefaults();
         event.registerReloadListener(MolangParticleEngine.INSTANCE);
         event.registerReloadListener(BedrockModelParticles.reloadListener());
     }

@@ -1,7 +1,0 @@
-{
-  "variant": "geometry",
-  "model_id": "kltyton_bedrock_runtime_examples:particle/example_model",
-  "texture": "minecraft:particle/generic_1",
-  "material": "cutout",
-  "double_sided": false
-}

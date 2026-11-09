@@ -732,7 +732,7 @@ public class ParticleEmitter implements MolangInstance {
             for (IEmitterComponent component : preset.components) {
                 if (component instanceof EmitterLifetime) component.apply(this);
             }
-            if (attached == null && itemOwner == null || isBindingDiscarded() || !hasLoopingLifetime) expire();
+            if (isBindingDiscarded() || !hasLoopingLifetime) expire();
             for (IEmitterComponent component : preset.components) {
                 if (!(component instanceof EmitterInitialization) && !(component instanceof EmitterLifetimeEvents)
                         && !(component instanceof EmitterLifetime)) component.apply(this);

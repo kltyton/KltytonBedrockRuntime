@@ -2,8 +2,11 @@ package com.kltyton.bedrockruntime.client.selection.service;
 
 import com.kltyton.bedrockruntime.client.selection.model.VisualPartId;
 import com.kltyton.bedrockruntime.client.render.capture.ModelBoundsCapture;
+import com.kltyton.bedrockruntime.client.render.capture.EntityCapturePose;
 import com.kltyton.bedrockruntime.client.skill.keyframe.GeoKeyframeSkillClientQueue;
 import com.kltyton.bedrockruntime.client.skill.keyframe.GeoKeyframeSkillClientTicker;
+import com.kltyton.bedrockruntime.client.particle.definition.molang.RenderFrameContext;
+import com.kltyton.bedrockruntime.client.render.item.HeldItemCapture;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -40,6 +43,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
@@ -74,6 +78,8 @@ public abstract class BonePartSelectionLogic {
     private static final double MAX_SOFT_IMPULSE = 0.12;
     private static final String CLIENT_ATTACK_SCOPE_PREFIX = "client_attack_contact/";
     private static final Map<VisualPartId, VisualPart> RECORDED_PARTS = new LinkedHashMap<>();
+    private static final ThreadLocal<ModelCapture> ACTIVE_MODEL_CAPTURE = new ThreadLocal<>();
+    private static final Map<Integer, Map<VisualPartId, VisualPart>> COMPLETED_MODEL_CAPTURES = new LinkedHashMap<>();
     private static final Map<Integer, List<GeoObbAnimationState>> RECORDED_ANIMATIONS = new HashMap<>();
     private static final Set<Integer> LAST_REPORTED_ENTITIES = new LinkedHashSet<>();
     private static final Map<VisualPartId, Integer> DAMAGE_FLASHES = new HashMap<>();
@@ -92,6 +98,9 @@ public abstract class BonePartSelectionLogic {
     private static VisualPartId selectedPart;
     private static VisualPartId lastSyncedPart;
     private static int stateSyncTicks;
+    private static Level captureLevel;
+    private static long clientCaptureGameTime;
+    private static long geometryFrame = Long.MIN_VALUE;
 
     protected BonePartSelectionLogic() {
     }
@@ -102,13 +111,35 @@ public abstract class BonePartSelectionLogic {
             return;
         }
 
-        GeoKeyframeSkillClientTicker.tick(minecraft);
-        com.kltyton.bedrockruntime.client.render.item.HeldItemCapture.captureLocalPlayer(minecraft);
-        Vec3 cameraPosition = ClientSceneAccess.position(ClientSceneAccess.camera(minecraft));
-        synchronized (LOCK) {
-            RECORDED_PARTS.replaceAll((id, part) -> part.relativeTo(cameraPosition));
+        if (captureLevel != minecraft.level) {
+            clear();
+            captureLevel = minecraft.level;
         }
         long currentGameTime = minecraft.level.getGameTime();
+        synchronized (LOCK) {
+            clientCaptureGameTime = currentGameTime;
+            discardPreviousFrameParts();
+            if (!COMPLETED_MODEL_CAPTURES.isEmpty()) {
+                RECORDED_PARTS.keySet().removeIf(id -> COMPLETED_MODEL_CAPTURES.containsKey(id.ownerEntityId()));
+                COMPLETED_MODEL_CAPTURES.values().forEach(RECORDED_PARTS::putAll);
+                COMPLETED_MODEL_CAPTURES.clear();
+            }
+            RECORDED_PARTS.entrySet().removeIf(entry ->
+                    entry.getValue().captureGameTime() < currentGameTime - ObbEntityPartsPayload.MAX_CAPTURE_AGE_TICKS
+                            || entry.getValue().captureGameTime() > currentGameTime);
+        }
+        GeoKeyframeSkillClientTicker.tick(minecraft);
+        HeldItemCapture.captureLocalPlayer(minecraft);
+        Vec3 cameraPosition = ClientSceneAccess.position(ClientSceneAccess.camera(minecraft));
+        synchronized (LOCK) {
+            Set<Integer> owners = new LinkedHashSet<>();
+            RECORDED_PARTS.keySet().forEach(id -> owners.add(id.ownerEntityId()));
+            Map<Integer, CarrierPose> rootPoses = collectCarrierPoses(minecraft, owners);
+            RECORDED_PARTS.entrySet().removeIf(entry -> entry.getKey().ownerEntityId() >= 0
+                    && (!rootPoses.containsKey(entry.getKey().ownerEntityId())
+                    || rootPoses.get(entry.getKey().ownerEntityId()).owner() != entry.getValue().owner()));
+            RECORDED_PARTS.replaceAll((id, part) -> part.relativeTo(cameraPosition, rootPoses.get(id.ownerEntityId())));
+        }
         STABLE_PAIR_NORMALS.entrySet().removeIf(entry -> currentGameTime - entry.getValue().gameTime() > 3L);
 
         List<ObbEntityPartsPayload> entityPartsPayloads;
@@ -121,7 +152,6 @@ public abstract class BonePartSelectionLogic {
             }
             contactReport = buildContactReport(minecraft);
             entityPartsPayloads = buildEntityPartsPayloads(minecraft);
-            RECORDED_PARTS.clear();
             RECORDED_ANIMATIONS.clear();
             DAMAGE_FLASHES.replaceAll((id, ticks) -> ticks - 1);
             DAMAGE_FLASHES.values().removeIf(ticks -> ticks <= 0);
@@ -144,9 +174,51 @@ public abstract class BonePartSelectionLogic {
         return record(id, bounds, GeoObbAnimationState.NONE);
     }
 
+    /** Called only when the local renderer can replace the complete held-item capture. */
+    public static void clearHeldItemCaptures(int entityId) {
+        synchronized (LOCK) {
+            RECORDED_PARTS.keySet().removeIf(id -> id.ownerEntityId() == entityId
+                    && id.source().equals(ObbBuiltinBones.HELD_ITEM_SOURCE));
+        }
+    }
+
     public static boolean record(VisualPartId id, PartBounds bounds, GeoObbAnimationState animationState) {
+        return record(id, bounds, animationState, null);
+    }
+
+    /** Publishes a complete model submission, including a model with no eligible parts. */
+    public static void captureEntityModel(Entity owner, Vec3 camera, Runnable submit) {
+        ModelCapture previous = ACTIVE_MODEL_CAPTURE.get();
+        ModelCapture capture = new ModelCapture(owner, camera, owner.level().getGameTime(), new LinkedHashMap<>());
+        ACTIVE_MODEL_CAPTURE.set(capture);
+        try {
+            submit.run();
+        } finally {
+            if (previous == null) {
+                ACTIVE_MODEL_CAPTURE.remove();
+            } else {
+                ACTIVE_MODEL_CAPTURE.set(previous);
+            }
+        }
+
+        synchronized (LOCK) {
+            COMPLETED_MODEL_CAPTURES.put(owner.getId(), capture.parts());
+        }
+    }
+
+    private static void discardPreviousFrameParts() {
+        long frame = RenderFrameContext.frameIndex();
+        if (geometryFrame != frame) {
+            RECORDED_PARTS.values().removeIf(part -> !part.completeModelCapture());
+            geometryFrame = frame;
+        }
+    }
+
+    public static boolean record(VisualPartId id, PartBounds bounds, GeoObbAnimationState animationState,
+            EntityCapturePose capturedRoot) {
         ModelBoundsCapture.record(id, bounds.renderBounds());
-        ObbBoneState bone = registeredBone(id);
+        Entity owner = entityById(id.ownerEntityId());
+        ObbBoneState bone = registeredBone(id, owner);
         if (bone == null) {
             return false;
         }
@@ -156,9 +228,26 @@ public abstract class BonePartSelectionLogic {
         }
 
         synchronized (LOCK) {
-            RECORDED_PARTS.put(id, new VisualPart(id, bounds, bone,
+            EntityCapturePose root = capturedRoot == null && owner != null
+                    ? EntityCapturePose.sample(owner, RenderFrameContext.framePartialTick()) : capturedRoot;
+            ModelCapture capture = ACTIVE_MODEL_CAPTURE.get();
+            boolean completeModelCapture = capture != null && capture.owner() == owner;
+            VisualPart part = new VisualPart(id, bounds, bone,
                     animationState == null ? GeoObbAnimationState.NONE : animationState,
-                    ClientSceneAccess.position(ClientSceneAccess.camera(Minecraft.getInstance()))));
+                    completeModelCapture ? capture.camera()
+                            : ClientSceneAccess.position(ClientSceneAccess.camera(Minecraft.getInstance())),
+                    completeModelCapture ? capture.gameTime() : clientCaptureGameTime,
+                    root == null ? null : new CarrierPose(owner, root.position(), root.yaw()), owner,
+                    completeModelCapture);
+            if (completeModelCapture) {
+                capture.parts().put(id, part);
+            } else {
+                discardPreviousFrameParts();
+                VisualPart previous = RECORDED_PARTS.get(id);
+                if (previous == null || !previous.completeModelCapture() || previous.owner() != owner) {
+                    RECORDED_PARTS.put(id, part);
+                }
+            }
         }
         return true;
     }
@@ -317,10 +406,33 @@ public abstract class BonePartSelectionLogic {
         return best;
     }
 
-    private static void clear() {
+    /** Invalidates model-dependent geometry after a resource publication; contacts finish on the next tick. */
+    public static void invalidateRenderCaptures() {
         synchronized (LOCK) {
             selectedPart = null;
             RECORDED_PARTS.clear();
+            COMPLETED_MODEL_CAPTURES.clear();
+            geometryFrame = Long.MIN_VALUE;
+            PREVIOUS_CARRIER_POSES.clear();
+            HARD_SUPPORT_SURFACES.clear();
+            LOCAL_PLAYER_COLLIDERS.clear();
+            STABLE_PAIR_NORMALS.clear();
+            localPlayerColliderSnapshotPosition = Vec3.ZERO;
+            PENDING_MOVEMENT_SUPPORT.remove();
+            activeSupport = null;
+            ModelBoundsCapture.clear();
+            syncSelection(null);
+        }
+    }
+
+    private static void clear() {
+        synchronized (LOCK) {
+            captureLevel = null;
+            clientCaptureGameTime = 0;
+            geometryFrame = Long.MIN_VALUE;
+            selectedPart = null;
+            RECORDED_PARTS.clear();
+            COMPLETED_MODEL_CAPTURES.clear();
             RECORDED_ANIMATIONS.clear();
             LAST_REPORTED_ENTITIES.clear();
             DAMAGE_FLASHES.clear();
@@ -374,12 +486,14 @@ public abstract class BonePartSelectionLogic {
         Camera camera = ClientSceneAccess.camera(minecraft);
         Vec3 cameraPosition = ClientSceneAccess.position(camera);
         Map<Integer, List<ObbEntityPartsPayload.Part>> partsByEntity = new HashMap<>();
+        Map<Integer, Long> captureTimes = new HashMap<>();
         Map<Integer, GeoObbAnimationState> animationStateByEntity = new HashMap<>();
         for (VisualPart part : RECORDED_PARTS.values()) {
             int entityId = part.id().ownerEntityId();
             if (entityId < 0) {
                 continue;
             }
+            captureTimes.merge(entityId, part.captureGameTime(), Math::min);
 
             if (part.animationState().active()) {
                 animationStateByEntity.put(entityId, part.animationState());
@@ -402,6 +516,7 @@ public abstract class BonePartSelectionLogic {
                             part.bone().collisionMode()));
         }
         for (SyntheticPart part : syntheticParts) {
+            captureTimes.merge(part.entityId(), minecraft.level.getGameTime(), Math::min);
             ObbGeometry geometry = part.geometry();
             partsByEntity.computeIfAbsent(part.entityId(), ignored -> new ArrayList<>())
                     .add(new ObbEntityPartsPayload.Part(
@@ -425,7 +540,8 @@ public abstract class BonePartSelectionLogic {
         partsByEntity.forEach((entityId, parts) -> {
             GeoObbAnimationState primary = animationStateByEntity.getOrDefault(entityId, GeoObbAnimationState.NONE);
             payloads.add(new ObbEntityPartsPayload(entityId, primary, parts,
-                    RECORDED_ANIMATIONS.getOrDefault(entityId, primary.active() ? List.of(primary) : List.of())));
+                    RECORDED_ANIMATIONS.getOrDefault(entityId, primary.active() ? List.of(primary) : List.of()),
+                    (int) (minecraft.level.getGameTime() - captureTimes.getOrDefault(entityId, minecraft.level.getGameTime()))));
         });
         for (int entityId : LAST_REPORTED_ENTITIES) {
             if (!partsByEntity.containsKey(entityId)) {
@@ -440,6 +556,8 @@ public abstract class BonePartSelectionLogic {
     private static ObbContactReportPayload buildContactReport(Minecraft minecraft) {
         List<SyntheticPart> syntheticParts = localPlayerFallbackParts(minecraft);
         if (RECORDED_PARTS.isEmpty() && syntheticParts.isEmpty()) {
+            refreshHardSupportSurfaces(minecraft, Map.of());
+            PREVIOUS_CARRIER_POSES.clear();
             if (ACTIVE_CONTACTS.isEmpty()) {
                 return null;
             }
@@ -659,8 +777,8 @@ public abstract class BonePartSelectionLogic {
         Map<Integer, CarrierPose> poses = new HashMap<>();
         for (int entityId : entityIds) {
             Entity entity = minecraft.level.getEntity(entityId);
-            if (entity != null) {
-                poses.put(entityId, new CarrierPose(entity.position(), entity.getYRot()));
+            if (entity != null && !entity.isRemoved()) {
+                poses.put(entityId, new CarrierPose(entity, entity.position(), entity.getYRot()));
             }
         }
         return poses;
@@ -1136,7 +1254,7 @@ public abstract class BonePartSelectionLogic {
             Map<Integer, CarrierPose> currentCarrierPoses) {
         CarrierPose previous = PREVIOUS_CARRIER_POSES.get(carrier.getId());
         CarrierPose current = currentCarrierPoses.get(carrier.getId());
-        if (previous == null || current == null) {
+        if (previous == null || current == null || previous.owner() != current.owner()) {
             return Vec3.ZERO;
         }
         float yawDelta = Mth.wrapDegrees(current.yaw - previous.yaw);
@@ -1173,7 +1291,10 @@ public abstract class BonePartSelectionLogic {
     }
 
     private static ObbBoneState registeredBone(VisualPartId id) {
-        Entity entity = entityById(id.ownerEntityId());
+        return registeredBone(id, entityById(id.ownerEntityId()));
+    }
+
+    private static ObbBoneState registeredBone(VisualPartId id, Entity entity) {
         if (!(entity instanceof BoneHitboxEntity hitboxEntity)) {
             return null;
         }
@@ -1213,11 +1334,30 @@ public abstract class BonePartSelectionLogic {
         return false;
     }
 
+    private record ModelCapture(Entity owner, Vec3 camera, long gameTime, Map<VisualPartId, VisualPart> parts) {
+    }
+
     private record VisualPart(VisualPartId id, PartBounds bounds, ObbBoneState bone,
-            GeoObbAnimationState animationState, Vec3 captureCamera) {
-        private VisualPart relativeTo(Vec3 camera) {
-            return captureCamera.equals(camera) ? this : new VisualPart(id,
-                    bounds.translateRenderSpace(captureCamera.subtract(camera)), bone, animationState, camera);
+            GeoObbAnimationState animationState, Vec3 captureCamera, long captureGameTime, CarrierPose rootPose,
+            Entity owner, boolean completeModelCapture) {
+        private VisualPart relativeTo(Vec3 camera, CarrierPose currentRoot) {
+            if (captureCamera.equals(camera) && Objects.equals(rootPose, currentRoot)) {
+                return this;
+            }
+            PartBounds adjusted = captureCamera.equals(camera) ? bounds
+                    : bounds.translateRenderSpace(captureCamera.subtract(camera));
+            if (rootPose != null && currentRoot != null && !rootPose.equals(currentRoot)) {
+                Vec3 previous = rootPose.position().subtract(camera);
+                Vec3 current = currentRoot.position().subtract(camera);
+                float yaw = Mth.wrapDegrees(currentRoot.yaw() - rootPose.yaw());
+                Matrix4f transform = new Matrix4f()
+                        .translation((float) current.x, (float) current.y, (float) current.z)
+                        .rotateY((float) Math.toRadians(-yaw))
+                        .translate((float) -previous.x, (float) -previous.y, (float) -previous.z);
+                adjusted = adjusted.transformRenderSpace(transform);
+            }
+            return new VisualPart(id, adjusted, bone, animationState, camera, captureGameTime, currentRoot, owner,
+                    completeModelCapture);
         }
     }
 
@@ -1257,7 +1397,7 @@ public abstract class BonePartSelectionLogic {
             int secondEntityId, ObbBoneKey secondBone) {
     }
 
-    private record CarrierPose(Vec3 position, float yaw) {
+    private record CarrierPose(Entity owner, Vec3 position, float yaw) {
     }
 
     private record SupportSurface(int carrierEntityId, ObbBoneState bone, ObbGeometry geometry,

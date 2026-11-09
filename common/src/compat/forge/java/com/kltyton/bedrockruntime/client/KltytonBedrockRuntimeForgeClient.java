@@ -10,6 +10,8 @@ import com.kltyton.bedrockruntime.client.selection.service.BonePartSelectionClie
 import com.kltyton.bedrockruntime.network.protocol.BoneHitboxNetworking;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import com.kltyton.bedrockruntime.network.KltytonBedrockRuntimeForgeNetworking;
@@ -41,6 +43,7 @@ public final class KltytonBedrockRuntimeForgeClient {
         MinecraftForge.EVENT_BUS.addListener(KltytonBedrockRuntimeForgeClient::clientTick);
         MinecraftForge.EVENT_BUS.addListener(KltytonBedrockRuntimeForgeClient::attackEntity);
         MinecraftForge.EVENT_BUS.addListener(KltytonBedrockRuntimeForgeClient::interactEntity);
+        MinecraftForge.EVENT_BUS.addListener(KltytonBedrockRuntimeForgeClient::beforeInteractionInput);
     }
 
     private static void sendToServerWhenConnected(Object payload) {
@@ -64,6 +67,14 @@ public final class KltytonBedrockRuntimeForgeClient {
     private static void attackEntity(AttackEntityEvent event) {
         if (event.getEntity().level().isClientSide()) {
             BonePartSelectionClient.recordAttack(event.getTarget());
+        }
+    }
+
+    // Entity interaction and attack events occur after their vanilla packets have been sent.
+    private static void beforeInteractionInput(InputEvent.InteractionKeyMappingTriggered event) {
+        if ((event.isAttack() || event.isUseItem())
+                && Minecraft.getInstance().hitResult instanceof EntityHitResult) {
+            BonePartSelectionClient.syncCurrentSelection();
         }
     }
 

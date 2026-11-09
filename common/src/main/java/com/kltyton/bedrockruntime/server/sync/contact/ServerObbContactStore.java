@@ -163,13 +163,12 @@ public final class ServerObbContactStore {
         active.lastSeenTick = gameTime;
 
         if (newContact) {
+            active.lastEventServerTick = gameTime;
             BoneHitboxContactAttackHooks.handleContact(active.context(ObbCollisionPhase.BEGIN));
-            active.lastEventObservedTick = observedGameTime;
         } else if (contact.phase() == ObbCollisionPhase.STAY
-                && isLeadReporter(active.reporters, reporter)
-                && active.lastEventObservedTick != observedGameTime) {
+                && active.lastEventServerTick != gameTime) {
+            active.lastEventServerTick = gameTime;
             BoneHitboxContactAttackHooks.handleContact(active.context(ObbCollisionPhase.STAY));
-            active.lastEventObservedTick = observedGameTime;
         }
     }
 
@@ -215,13 +214,12 @@ public final class ServerObbContactStore {
         DIRTY_PHYSICAL_PAIRS.add(active.physicalPairKey());
 
         if (newContact) {
+            active.lastEventServerTick = gameTime;
             BoneHitboxCollisionHooks.handleClientContact(active.context(ObbCollisionPhase.BEGIN));
-            active.lastEventObservedTick = observedGameTime;
         } else if (contact.phase() == ObbCollisionPhase.STAY
-                && isLeadReporter(active.reporters, reporter)
-                && active.lastEventObservedTick != observedGameTime) {
+                && active.lastEventServerTick != gameTime) {
+            active.lastEventServerTick = gameTime;
             BoneHitboxCollisionHooks.handleClientContact(active.context(ObbCollisionPhase.STAY));
-            active.lastEventObservedTick = observedGameTime;
         }
 
     }
@@ -389,11 +387,6 @@ public final class ServerObbContactStore {
         REPORTED_PLAYER_MOVEMENTS.clear();
         DIRTY_PHYSICAL_PAIRS.clear();
         PHYSICAL_MANIFOLDS.clear();
-    }
-
-    private static boolean isLeadReporter(Map<UUID, Long> reporters, ServerPlayer reporter) {
-        UUID lead = reporters.keySet().stream().min(UUID::compareTo).orElse(reporter.getUUID());
-        return reporter.getUUID().equals(lead);
     }
 
     private static void applyPhysicalResponse(PhysicalContact contact, PersistentManifold manifold, long serverTick) {
@@ -754,7 +747,7 @@ public final class ServerObbContactStore {
         private Vec3 correction;
         private long observedGameTime;
         private long lastSeenTick;
-        private long lastEventObservedTick = Long.MIN_VALUE;
+        private long lastEventServerTick = Long.MIN_VALUE;
 
         private ActiveAttack(AttackKey key, Entity attacker, ObbBoneState attackBone, Entity target,
                 ObbBoneState hurtBone, ObbCollisionMode collisionMode, Vec3 correction, long observedGameTime) {
@@ -807,7 +800,7 @@ public final class ServerObbContactStore {
         private Vec3 correction;
         private long observedGameTime;
         private long lastSeenTick;
-        private long lastEventObservedTick = Long.MIN_VALUE;
+        private long lastEventServerTick = Long.MIN_VALUE;
 
         private ActiveCollision(CanonicalCollision collision) {
             first = collision.first;

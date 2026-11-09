@@ -1,6 +1,9 @@
 package com.kltyton.bedrockruntime.client.render.item;
 
 import com.kltyton.bedrockruntime.api.bone.builtin.ObbBuiltinBones;
+import com.kltyton.bedrockruntime.api.geckolib.state.GeoObbAnimationState;
+import com.kltyton.bedrockruntime.client.render.capture.EntityCapturePose;
+import com.kltyton.bedrockruntime.client.selection.model.VisualPartEntityRenderState;
 import com.kltyton.bedrockruntime.client.config.BoneHitboxClientOptions;
 import com.kltyton.bedrockruntime.client.geometry.bounds.PartBounds;
 import com.kltyton.bedrockruntime.client.render.outline.PartOutlineRenderer;
@@ -25,7 +28,7 @@ public final class HeldItemCapture {
     public static void submit(ItemStackRenderState item, PoseStack pose, SubmitNodeCollector output,
             int light, int overlay, int outline, ArmedEntityRenderState state, HumanoidArm arm) {
         Context previous = ACTIVE.get();
-        ACTIVE.set(new Context(VisualPartId.ownerKey(state), arm));
+        ACTIVE.set(new Context(state, arm));
         try { item.submit(pose, output, light, overlay, outline); }
         finally {
             if (previous == null) { ACTIVE.remove(); } else { ACTIVE.set(previous); }
@@ -43,7 +46,8 @@ public final class HeldItemCapture {
         VisualPartId id = new VisualPartId(ObbBuiltinBones.HELD_ITEM_SOURCE, context.owner,
                 context.arm == HumanoidArm.LEFT ? ObbBuiltinBones.LEFT_HELD_ITEM_NAME : ObbBuiltinBones.RIGHT_HELD_ITEM_NAME,
                 index);
-        if (BonePartSelectionClient.record(id, bounds) && BonePartSelectionClient.shouldRenderOutline(id)) {
+        if (BonePartSelectionClient.record(id, bounds, GeoObbAnimationState.NONE, context.capturePose)
+                && BonePartSelectionClient.shouldRenderOutline(id)) {
             SubmitNodeCollector localOutput = LOCAL_OUTLINE_OUTPUT.get();
             PartOutlineRenderer.submit(localOutput == null ? output : localOutput, pose, bounds);
         }
@@ -54,7 +58,8 @@ public final class HeldItemCapture {
     }
 
     public static void submitLocalPlayerOutlines(Minecraft minecraft, Vec3 camera, SubmitNodeCollector output) {
-        if (!BoneHitboxClientOptions.shouldRenderDebugObbs(minecraft)) { return; }
+        if (!BoneHitboxClientOptions.shouldRenderDebugObbs(minecraft)
+                && !BoneHitboxClientOptions.shouldRenderCrosshairObb(minecraft)) { return; }
         SubmitNodeCollector previous = LOCAL_OUTLINE_OUTPUT.get();
         LOCAL_OUTLINE_OUTPUT.set(output);
         try {
@@ -70,6 +75,7 @@ public final class HeldItemCapture {
         var state = dispatcher.extractEntity(minecraft.player, partialTick);
         if (state instanceof LivingEntityRenderState living
                 && dispatcher.getRenderer(minecraft.player) instanceof HeldItemPoseCapture capture) {
+            BonePartSelectionClient.clearHeldItemCaptures(minecraft.player.getId());
             var offset = dispatcher.getRenderer(living).getRenderOffset(living);
             PoseStack pose = new PoseStack();
             pose.translate(state.x - camera.x + offset.x, state.y - camera.y + offset.y, state.z - camera.z + offset.z);
@@ -80,7 +86,13 @@ public final class HeldItemCapture {
     private static final class Context {
         private final String owner;
         private final HumanoidArm arm;
+        private final EntityCapturePose capturePose;
         private int layer;
-        private Context(String owner, HumanoidArm arm) { this.owner = owner; this.arm = arm; }
+        private Context(ArmedEntityRenderState state, HumanoidArm arm) {
+            this.owner = VisualPartId.ownerKey(state);
+            this.arm = arm;
+            this.capturePose = state instanceof VisualPartEntityRenderState source
+                    ? source.kltyton_bedrock_runtime$getCapturePose() : null;
+        }
     }
 }

@@ -3,6 +3,9 @@ package com.kltyton.bedrockruntime.client.render.vanilla;
 import com.kltyton.bedrockruntime.client.render.outline.PartOutlineRenderer;
 
 import com.kltyton.bedrockruntime.client.selection.service.BonePartSelectionClient;
+import com.kltyton.bedrockruntime.api.geckolib.state.GeoObbAnimationState;
+import com.kltyton.bedrockruntime.client.selection.model.VisualPartEntityRenderState;
+import com.kltyton.bedrockruntime.client.render.capture.EntityCapturePose;
 import com.kltyton.bedrockruntime.client.geometry.bounds.PartBounds;
 import com.kltyton.bedrockruntime.client.selection.model.VisualPartId;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -43,7 +46,9 @@ public final class VanillaModelPartSelectionLayer<S extends EntityRenderState, M
 
         String partName = path.isEmpty() ? "root" : path.substring(1);
         VisualPartId id = VisualPartId.vanilla(state, partName, cubeIndex);
-        boolean accepted = BonePartSelectionClient.record(id, bounds);
+        EntityCapturePose capturePose = state instanceof VisualPartEntityRenderState source
+                ? source.kltyton_bedrock_runtime$getCapturePose() : null;
+        boolean accepted = BonePartSelectionClient.record(id, bounds, GeoObbAnimationState.NONE, capturePose);
         if (!accepted) {
             return;
         }

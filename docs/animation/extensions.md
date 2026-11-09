@@ -176,6 +176,8 @@ assets/<namespace>/models/<path>.json
 
 Molang expressions in component, curve and event fields are compiled and evaluated by the pinned mochafloats source modules. Those modules are rebuilt for Java 17 from the 6.1.1 sources with KBR's particle-specific dialect, numeric operators, contextual scope and structured control flow patches. GeckoLib animation and model Molang remains on GeckoLib's own evaluator; KBR does not replace native GeckoLib controllers, keyframes or animation expressions.
 
+The particle dialect supports `%` and `^` through the same contextual evaluator as its ordinary operators. Array indexing and truth conversion use that scope as well. `math.die_roll` retains floating-point bounds. For the two-bound forms of `math.random_integer` and `math.die_roll_integer`, the inclusive integer range is `ceil(min(low, high))` through `floor(max(low, high))`; a requested draw fails with a diagnostic if that range contains no finite integer. Zero dice still sum to zero. / 粒子方言的 `%` 与 `^` 和普通运算共用上下文解释器，数组下标与真假转换也使用同一作用域。`math.die_roll` 保留浮点边界。双边界整数随机函数在 `ceil(min(low, high))` 至 `floor(max(low, high))` 的闭区间采样；需要采样而区间不含有限整数时报告错误，零次掷骰仍返回零。
+
 ### Model-particle descriptors
 
 A descriptor is loaded into the model registry under both its file ID and its `model_id`:
@@ -251,13 +253,12 @@ ModelParticleModels.register("examplemod:programmatic_model",
 
 `BedrockModelParticles.initialize()` registers the `model_appearance` component and the `model_particle` provider through `ParticleEvents`; loader wiring registers the particle type before client resources load and registers `reloadListener()` with the client resource manager. Custom components, event nodes, particle types and model materials use the same `ParticleEvents` registration events.
 
-### Development examples
+### Particle preview
 
-The optional examples source set adds a billboard effect, a model particle, a descriptor and a self-authored vanilla cube model under `examples/src/main/resources/assets/kltyton_bedrock_runtime_examples`. They are active only with `-Pdevelopment_examples` and are excluded from release JARs. In-game, an operator can preview them with:
+An operator can preview an effect already loaded from a resource pack by its ID:
 
 ```text
-/kltyton_bedrock_runtime add kltyton_bedrock_runtime_examples:example_billboard ~ ~1 ~
-/kltyton_bedrock_runtime add kltyton_bedrock_runtime_examples:example_model_particle ~ ~1 ~
+/kltyton_bedrock_runtime add <namespace>:<effect_id> ~ ~1 ~
 ```
 
 ## Animation graphs

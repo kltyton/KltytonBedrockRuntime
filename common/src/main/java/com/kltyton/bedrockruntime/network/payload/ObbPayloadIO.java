@@ -81,6 +81,7 @@ public final class ObbPayloadIO {
 
     public static void writeEntityParts(FriendlyByteBuf buffer, ObbEntityPartsPayload payload) {
         buffer.writeVarInt(payload.entityId());
+        buffer.writeVarInt(payload.captureAgeTicks());
         writeAnimationState(buffer, payload.animationState());
         buffer.writeVarInt(payload.controllerStates().size());
         for (GeoObbAnimationState state : payload.controllerStates()) {
@@ -94,6 +95,10 @@ public final class ObbPayloadIO {
 
     public static ObbEntityPartsPayload readEntityParts(FriendlyByteBuf buffer) {
         int entityId = buffer.readVarInt();
+        int captureAgeTicks = buffer.readVarInt();
+        if (captureAgeTicks < 0 || captureAgeTicks > ObbEntityPartsPayload.MAX_CAPTURE_AGE_TICKS) {
+            throw new IllegalArgumentException("Invalid OBB capture age: " + captureAgeTicks);
+        }
         GeoObbAnimationState animationState = readAnimationState(buffer);
         int controllerCount = buffer.readVarInt();
         if (controllerCount < 0 || controllerCount > ObbEntityPartsPayload.MAX_CONTROLLERS) {
@@ -108,13 +113,13 @@ public final class ObbPayloadIO {
             throw new IllegalArgumentException("Invalid OBB part count: " + declaredCount);
         }
         if (declaredCount == 0) {
-            return new ObbEntityPartsPayload(entityId, animationState, List.of(), controllers);
+            return new ObbEntityPartsPayload(entityId, animationState, List.of(), controllers, captureAgeTicks);
         }
         List<ObbEntityPartsPayload.Part> parts = new ArrayList<>(declaredCount);
         for (int i = 0; i < declaredCount; i++) {
             parts.add(readPart(buffer));
         }
-        return new ObbEntityPartsPayload(entityId, animationState, parts, controllers);
+        return new ObbEntityPartsPayload(entityId, animationState, parts, controllers, captureAgeTicks);
     }
 
     public static void writePart(FriendlyByteBuf buffer, ObbEntityPartsPayload.Part part) {

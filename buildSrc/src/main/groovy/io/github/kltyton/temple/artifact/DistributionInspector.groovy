@@ -32,8 +32,10 @@ final class DistributionInspector {
             String modId = identity.getProperty('mod_id')
             if (target.loader == 'fabric') {
                 def value = new JsonSlurper().parseText(text)
+                String minecraftRange = target.properties.getProperty('fabric_minecraft_version_range',
+                        target.properties.getProperty('minecraft_version_range'))
                 if (value.id != modId || value.version != identity.getProperty('mod_version') || value.depends.minecraft != '='+target.minecraft &&
-                        value.depends.minecraft != target.properties.getProperty('minecraft_version_range')) {
+                        value.depends.minecraft != minecraftRange) {
                     throw new IllegalArgumentException('Incorrect Fabric identity or Minecraft version')
                 }
                 value.entrypoints.values().flatten().each { item ->

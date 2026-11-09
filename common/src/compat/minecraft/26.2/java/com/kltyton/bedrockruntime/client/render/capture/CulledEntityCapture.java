@@ -26,14 +26,21 @@ public final class CulledEntityCapture {
             return original;
         }
 
+        AABB modelBounds = sampleIfNearby(entity, cameraX, cameraY, cameraZ);
+        return modelBounds == null ? original : original.minmax(modelBounds.inflate(0.5));
+    }
+
+    /** Shares the same per-tick sample between frustum expansion and extraction rejection. */
+    public static AABB sampleIfNearby(Entity entity, double cameraX, double cameraY, double cameraZ) {
         Minecraft minecraft = Minecraft.getInstance();
         ClientLevel level = minecraft.level;
-        if (level == null) {
-            return original;
+        if (!(entity instanceof BoneHitboxEntity) || entity.isRemoved()
+                || level == null || entity.level() != level
+                || entity.distanceToSqr(cameraX, cameraY, cameraZ) > CAPTURE_RANGE_SQR) {
+            return null;
         }
-        AABB modelBounds = ModelBoundsCapture.getOrSample(level, entity,
+        return ModelBoundsCapture.getOrSample(level, entity,
                 () -> sample(minecraft, entity, new Vec3(cameraX, cameraY, cameraZ)));
-        return modelBounds == null ? original : original.minmax(modelBounds.inflate(0.5));
     }
 
     public static void record(VisualPartId part, AABB renderBounds) {
