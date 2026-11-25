@@ -3,6 +3,7 @@ package com.kltyton.bedrockruntime.client.particle.runtime;
 import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 import com.kltyton.bedrockruntime.client.particle.api.IMolangParticleInstance;
 import com.kltyton.bedrockruntime.client.particle.definition.component.ParticleInitialization;
+import com.kltyton.bedrockruntime.client.particle.definition.component.ParticleAppearanceCameraDistanceFade;
 import com.kltyton.bedrockruntime.client.particle.definition.molang.RenderFrameContext;
 
 import java.util.ArrayList;
@@ -62,10 +63,8 @@ final class PerFrameParticleExpressions {
                 if (particle instanceof MolangParticleInstance builtIn) {
                     builtIn.refreshAtlasSprite();
                     if (emitter.hasInvalidLocalFrame()) continue;
-                    if (emitter.needsAppearanceUpdate() || !builtIn.hasAppearanceData()) {
-                        builtIn.beginAppearanceUpdate();
-                        ParticleInitialization.render(particle);
-                        builtIn.finishAppearanceUpdate();
+                    if (builtIn.getPreset().frameAppearance || emitter.needsAppearanceUpdate() || !builtIn.hasAppearanceData()) {
+                        builtIn.prepareAppearance(frame, false);
                     }
                     emitter.noteRenderLifetime(builtIn.renderLifetimeNanos());
                 } else {
@@ -77,11 +76,12 @@ final class PerFrameParticleExpressions {
                 if (particle == null) continue;
                 if (particle instanceof MolangParticleInstance builtIn
                         && particle.getEmitter().forceWarmupAppearance()) {
-                    builtIn.beginAppearanceUpdate();
-                    ParticleInitialization.render(particle);
-                    builtIn.finishAppearanceUpdate();
+                    builtIn.prepareAppearance(frame, true);
                 }
                 owner.prepareFrameMotion(particle, partialTick);
+                if (particle.getPreset().cameraDistanceFade && !particle.getEmitter().hasInvalidLocalFrame()) {
+                    ParticleAppearanceCameraDistanceFade.INSTANCE.apply(particle);
+                }
             }
         } finally {
             RenderFrameContext.exit();

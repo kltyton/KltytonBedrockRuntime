@@ -44,6 +44,9 @@ public class ParticlePreset {
 
     public VariableTable vars;
     public @Nullable ParticleInitialization initialization;
+    public final boolean cameraDistanceFade;
+    final boolean frameAppearance;
+    final boolean frameSimulation;
 
     /// For custom preset data
     protected Map<Class<?>, Object> tickets;
@@ -70,8 +73,7 @@ public class ParticlePreset {
         }
         if (effect.components.get(ParticleAppearanceBillboard.ID) instanceof ParticleAppearanceBillboard component) {
             this.facingCameraMode = FaceCameraMode.fromComponent(component.faceCameraMode());
-            this.minSpeedThresholdSqr = component.direction() == ParticleAppearanceBillboard.Direction.DEFAULT
-                    ? 0.01F : Mth.square(component.direction().minSpeedThreshold());
+            this.minSpeedThresholdSqr = Mth.square(component.direction().minSpeedThreshold());
             this.invTextureWidth = 1.0F / component.uv().texturewidth();
             this.invTextureHeight = 1.0F / component.uv().textureheight();
         } else {
@@ -120,7 +122,14 @@ public class ParticlePreset {
         }
         this.vars = table;
         this.initialization = (ParticleInitialization) effect.components.get(ParticleInitialization.ID);
+        this.cameraDistanceFade = effect.components.containsKey(ParticleAppearanceCameraDistanceFade.ID)
+                || ParticleAppearanceCameraDistanceFade.appliesTo(effect.description.identifier().toString());
         ParticleEvents.post(new ParticlePresetLoadedEvent(this));
+        this.frameAppearance = ParticleInitialization.requiresFrameAppearance(this);
+        this.frameSimulation = frameAppearance
+                || this.initialization != null && !this.initialization.perUpdateExpression().getExpStr().isBlank()
+                || this.effect.orderedParticleComponentsWhichRequireUpdate.stream().anyMatch(
+                        component -> !(component instanceof ParticleInitialization));
     }
 
     public void prepareVariables(IMolangParticleInstance instance) {

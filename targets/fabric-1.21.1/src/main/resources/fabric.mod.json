@@ -30,6 +30,6 @@
         "minecraft": "${fabric_minecraft_version_range}",
         "java": ">=${java_version}",
         "forgeconfigapiport": ">=${forge_config_api_port_version}",
-        "geckolib": "=${geckolib_version}"
+        "geckolib": ">=${geckolib_version}"
     }
 }

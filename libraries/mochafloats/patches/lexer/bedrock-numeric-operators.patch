@@ -1,4 +1,4 @@
-# Bedrock resource-version syntax and extended numeric operators.
+# Bedrock numeric literals and extended numeric operators.
 artifact: lexer
 upstream: 6.1.1
 file: org/redlance/mocha/lexer/TokenKind.java
@@ -18,4 +18,16 @@ file: org/redlance/mocha/lexer/MolangLexerImpl.java
                 case '/': tokenKind = TokenKind.SLASH; break;
                 case '%': tokenKind = TokenKind.PERCENT; break;
                 case '^': tokenKind = TokenKind.CARET; break;
+>>>>>>> REPLACEMENT
+
+file: org/redlance/mocha/lexer/MolangLexerImpl.java
+<<<<<<< SOURCE
+            return new Token(TokenKind.FLOAT, builder.toString(), start, cursor.index());
+=======
+            if (c == 'f' || c == 'F') {
+                if (Characters.isValidForWordContinuation(read())) {
+                    return new Token(TokenKind.ERROR, "Malformed floating point suffix", start, cursor.index());
+                }
+            }
+            return new Token(TokenKind.FLOAT, builder.toString(), start, cursor.index());
 >>>>>>> REPLACEMENT

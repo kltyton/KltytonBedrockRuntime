@@ -1,4 +1,4 @@
-# Kltyton Bedrock Runtime
+# Kltyton Bedrock Runtime Lite
 
 <p align="center"><img src="icon.png" alt="Kltyton Bedrock Runtime" width="160"></p>
 
@@ -6,18 +6,24 @@
 
 A Minecraft library for GeckoLib model geometry: animation graphs, Tree/Baked model declarations, authored `poly_mesh` geometry, and model-derived oriented bounding boxes (OBBs) with part selection, combat/collision events, per-part state, model-based block shapes, and GeckoLib keyframe skills. The same client runtime loads Bedrock particle definitions with Molang expressions and model particles backed by vanilla cubes, GeckoLib geometry, or `poly_mesh` meshes.
 
+## Lite edition
+
+This branch builds the Lite edition. It contains the library APIs listed below and does not include the Bedrock add-on runtime of the full edition (running original Bedrock resource packs, behavior packs and `.mcpack`/`.mcaddon` files, Script API, add-on entities, items, blocks and world generation). Lite uses the same mod ID, packages and Maven artifact names as the full edition, with versions ending in `-lite`. Install either Lite or the full edition, not both.
+
 ## Target versions
 
 | Minecraft | Library version | Loader | Java | GeckoLib | Target project |
 | --- | --- | --- | --- | --- | --- |
-| 26.2 | 0.4.1 | Fabric | 25 | 5.5.3 | [fabric-26.2](targets/fabric-26.2) |
-| 26.2 | 0.4.1 | NeoForge | 25 | 5.5.3 | [neoforge-26.2](targets/neoforge-26.2) |
-| 26.1.2 | 0.4.1 | Fabric | 25 | 5.5.2 | [fabric-26.1.2](targets/fabric-26.1.2) |
-| 26.1.2 | 0.4.1 | NeoForge | 25 | 5.5.2 | [neoforge-26.1.2](targets/neoforge-26.1.2) |
-| 1.21.1 | 0.4.1 | Fabric | 21 | 4.9.2 | [fabric-1.21.1](targets/fabric-1.21.1) |
-| 1.21.1 | 0.4.1 | NeoForge | 21 | 4.9.2 | [neoforge-1.21.1](targets/neoforge-1.21.1) |
-| 1.20.1 | 0.4.1 | Fabric | 17 | 4.8.4 | [fabric-1.20.1](targets/fabric-1.20.1) |
-| 1.20.1 | 0.4.1 | Forge | 17 | 4.8.4 | [forge-1.20.1](targets/forge-1.20.1) |
+| 26.2 | 0.4.2-lite | Fabric | 25 | 5.5.3 | [fabric-26.2](targets/fabric-26.2) |
+| 26.2 | 0.4.2-lite | NeoForge | 25 | 5.5.3 | [neoforge-26.2](targets/neoforge-26.2) |
+| 26.1.2 | 0.4.2-lite | Fabric | 25 | 5.5.2 | [fabric-26.1.2](targets/fabric-26.1.2) |
+| 26.1.2 | 0.4.2-lite | NeoForge | 25 | 5.5.2 | [neoforge-26.1.2](targets/neoforge-26.1.2) |
+| 1.21.1 | 0.4.2-lite | Fabric | 21 | 4.9.2 | [fabric-1.21.1](targets/fabric-1.21.1) |
+| 1.21.1 | 0.4.2-lite | NeoForge | 21 | 4.9.2 | [neoforge-1.21.1](targets/neoforge-1.21.1) |
+| 1.20.1 | 0.4.2-lite | Fabric | 17 | 4.8.4 | [fabric-1.20.1](targets/fabric-1.20.1) |
+| 1.20.1 | 0.4.2-lite | Forge | 17 | 4.8.4 | [forge-1.20.1](targets/forge-1.20.1) |
+
+The GeckoLib column lists the minimum version; later GeckoLib releases for the same Minecraft version are accepted.
 
 All targets share the version-neutral code in `common/src/main` and select Minecraft- and loader-specific adapters from `common/src/compat`. Each `targets/<loader>-<minecraft>` directory is an independent Gradle project. Use matching Minecraft, loader and library builds on the client and server.
 
@@ -41,7 +47,7 @@ The [version and Maven coordinate guide](docs/versions/README.md) lists all eigh
 
 ## Maven coordinates
 
-Version `0.4.1` uses the `com.kltyton` Maven group. The common API module is `kltyton_bedrock_runtime-common-<minecraft>`; each loader module is `kltyton_bedrock_runtime-<loader>-<minecraft>`. The loader artifact is the runtime mod JAR, while the common artifact supplies compile-time API types. For NeoForge 26.2:
+Version `0.4.2-lite` uses the `com.kltyton` Maven group. The common API module is `kltyton_bedrock_runtime-common-<minecraft>`; each loader module is `kltyton_bedrock_runtime-<loader>-<minecraft>`. The loader artifact is the runtime mod JAR, while the common artifact supplies compile-time API types. For NeoForge 26.2:
 
 ```groovy
 repositories {
@@ -55,8 +61,8 @@ repositories {
 }
 
 dependencies {
-    compileOnly 'com.kltyton:kltyton_bedrock_runtime-common-26.2:0.4.1'
-    runtimeOnly 'com.kltyton:kltyton_bedrock_runtime-neoforge-26.2:0.4.1'
+    compileOnly 'com.kltyton:kltyton_bedrock_runtime-common-26.2:0.4.2-lite'
+    runtimeOnly 'com.kltyton:kltyton_bedrock_runtime-neoforge-26.2:0.4.2-lite'
 }
 ```
 
@@ -92,7 +98,7 @@ public void kltyton_bedrock_runtime$registerObbBones(ObbBoneRegistrar registrar)
 }
 ```
 
-Use the actual bone names in your model. `dataFactory(BASE, ...)` selects the base part within the registration; `data(...)` applies to all selected parts. The built-in player integration uses `HUMAN_BASE`, which includes the base and held items. See the [registration and synchronization API](docs/server_sync_api.md) for imports, events and state handling.
+Use the actual bone names in your model. `dataFactory(BASE, ...)` selects the base part within the registration. `data(...)` applies to all selected parts. To register player body parts and held items with `HUMAN_BASE`, follow the [player OBB example](docs/wiki/Player-OBB-Opt-In.md). See the [registration and synchronization API](docs/server_sync_api.md) for imports, events and state handling.
 
 ## Animation graphs
 

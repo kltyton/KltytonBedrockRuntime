@@ -10,7 +10,7 @@ import java.util.List;
 
 /// Particles that cross this plane expire.
 ///
-/// The equation uses the particle's simulation coordinates.
+/// The plane moves with the emitter and keeps its world-space orientation.
 ///
 /// The four parameters are the usual 4 elements of a plane equation.
 ///
@@ -26,7 +26,7 @@ public final class ParticleLifetimeKillPlane implements IParticleComponent {
     public final float C;
     public final float D;
 
-    private static final ThreadLocal<Vector3f> SIMULATION_POS = ThreadLocal.withInitial(Vector3f::new);
+    private static final ThreadLocal<Vector3f> OFFSET = ThreadLocal.withInitial(Vector3f::new);
     private final float normalLengthSqr;
 
     public ParticleLifetimeKillPlane(float A, float B, float C, float D) {
@@ -43,14 +43,16 @@ public final class ParticleLifetimeKillPlane implements IParticleComponent {
     }
 
     @Override
+    public void apply(IMolangParticleInstance instance) {
+        instance.setInsideKillPlane(inside(instance));
+    }
+
+    @Override
     public void update(IMolangParticleInstance instance) {
-        float current = distanceToPlane(instance, instance.getX(), instance.getY(), instance.getZ());
-        instance.setInsideKillPlane(current <= 0.0F);
-        boolean previousValid = instance instanceof com.kltyton.bedrockruntime.client.particle.runtime.MolangParticleInstance particle
-                ? particle.hasPreviousMotionSample() : instance.getAge() > 1;
-        if (!previousValid) return;
-        float previous = distanceToPlane(instance, instance.getPreviousX(), instance.getPreviousY(), instance.getPreviousZ());
-        if (previous <= 0.0F && current > 0.0F || previous > 0.0F && current <= 0.0F) instance.self().remove();
+        boolean previous = instance.isInsideKillPlane();
+        boolean current = inside(instance);
+        instance.setInsideKillPlane(current);
+        if (previous != current) instance.self().remove();
     }
 
     @Override
@@ -58,9 +60,9 @@ public final class ParticleLifetimeKillPlane implements IParticleComponent {
         return true;
     }
 
-    private float distanceToPlane(IMolangParticleInstance instance, double x, double y, double z) {
-        Vector3f position = instance.toSimulationSpace(x, y, z, SIMULATION_POS.get());
-        return A * position.x + B * position.y + C * position.z + D;
+    private boolean inside(IMolangParticleInstance instance) {
+        Vector3f offset = instance.getWorldOffsetFromEmitter(OFFSET.get());
+        return A * offset.x + B * offset.y + C * offset.z + D <= 0;
     }
 
     @Override

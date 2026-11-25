@@ -13,13 +13,6 @@ import java.util.Map;
 final class MochaValues {
     private MochaValues() {}
 
-    static int arrayIndex(float requested, int size) {
-        if (size == 0) return -1;
-        long selected = requested > 0
-                ? Integer.toUnsignedLong(requested >= 0x1.0p31F ? Integer.MIN_VALUE : (int) requested) : 0L;
-        return (int) (selected % size);
-    }
-
     static Value encode(Object raw) {
         if (raw instanceof Value value) return value;
         if (raw instanceof Boolean bool) return Value.of(bool);

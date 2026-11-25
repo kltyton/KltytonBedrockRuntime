@@ -9,6 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.particle.ParticleGroup;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -20,7 +21,12 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.animal.equine.AbstractChestedHorse;
+import net.minecraft.world.entity.animal.equine.Horse;
+import net.minecraft.world.entity.animal.cow.MushroomCow;
+import net.minecraft.world.entity.animal.frog.Frog;
+import net.minecraft.world.entity.animal.frog.FrogVariants;
 import net.minecraft.world.entity.animal.sheep.Sheep;
+import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.Blaze;
 import net.minecraft.world.entity.monster.EnderMan;
@@ -44,6 +50,8 @@ import net.minecraft.world.entity.monster.cubemob.AbstractCubeMob;
 import net.minecraft.world.entity.monster.Ghast;
 import net.minecraft.world.entity.monster.skeleton.Bogged;
 import net.minecraft.world.entity.monster.piglin.Piglin;
+import net.minecraft.world.entity.monster.piglin.PiglinArmPose;
+import net.minecraft.world.entity.raid.Raider;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.dimension.DimensionType;
@@ -69,6 +77,7 @@ import com.kltyton.bedrockruntime.client.particle.definition.molang.compiler.fun
 import com.kltyton.bedrockruntime.client.particle.definition.molang.compiler.function.query.ItemEquippedFunction;
 import com.kltyton.bedrockruntime.client.particle.definition.molang.compiler.function.query.ItemDurabilityQueries;
 import com.kltyton.bedrockruntime.client.particle.definition.molang.compiler.function.query.EntityQueryDispatch;
+import com.kltyton.bedrockruntime.client.particle.definition.molang.compiler.function.query.EntityStateQuery;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -314,6 +323,16 @@ public final class MolangQueries {
         });
     }
 
+    private static double swingDuration(MolangInstance instance, boolean modified) {
+        if (!(instance.getAttachedEntity() instanceof LivingEntity living)) return 0;
+        var hand = living.swingingArm == null ? InteractionHand.MAIN_HAND : living.swingingArm;
+        var item = living.getItemInHand(hand);
+        if (!modified) {
+            return item.getSwingAnimation().duration() / 20.0;
+        }
+        return Math.max(0, living.getCurrentSwingDuration()) / 20.0;
+    }
+
     private static void checkUnregistered(String name) {
         if (UNFROZEN_QUERIES.containsKey(name)) {
             throw new IllegalArgumentException(name + " had already registered!");
@@ -372,7 +391,67 @@ public final class MolangQueries {
         return ((time >> 31) ^ Math.abs(time / 24000)) & 7;
     }
 
+    /** Maps the supported vanilla variants to their Bedrock query values. */
+    private static int variant(Entity entity) {
+        if (entity instanceof MushroomCow cow) return cow.getVariant() == MushroomCow.Variant.BROWN ? 1 : 0;
+        if (entity instanceof Horse horse) return horse.getVariant().getId();
+        if (entity instanceof Fox fox) return fox.getVariant().getId();
+        if (entity instanceof Parrot parrot) return parrot.getVariant().getId();
+        if (entity instanceof Axolotl axolotl) {
+            return switch (axolotl.getVariant()) {
+                case LUCY -> 0;
+                case CYAN -> 1;
+                case GOLD -> 2;
+                case WILD -> 3;
+                case BLUE -> 4;
+            };
+        }
+        if (entity instanceof Frog frog) {
+            var key = frog.getVariant().unwrapKey().orElse(null);
+            if (FrogVariants.COLD.equals(key)) return 1;
+            if (FrogVariants.WARM.equals(key)) return 2;
+        }
+        return 0;
+    }
+
+    /** Horse markings and the Bedrock biome mark of vanilla villager types. */
+    private static int markVariant(Entity entity) {
+        if (entity instanceof Horse horse) return horse.getMarkings().getId();
+        if (!(entity instanceof Villager villager)) return 0;
+        var key = villager.getVillagerData().type().unwrapKey().orElse(null);
+        if (key == null || !key.identifier().getNamespace().equals("minecraft")) return 0;
+        return switch (key.identifier().getPath()) {
+            case "desert" -> 1;
+            case "jungle" -> 2;
+            case "savanna" -> 3;
+            case "snow" -> 4;
+            case "swamp" -> 5;
+            case "taiga" -> 6;
+            default -> 0;
+        };
+    }
+
     private static void setDefaultQueryValues() {
+        registerQueryFunction("query.has_any_leashed_entity_of_type", values ->
+                new com.kltyton.bedrockruntime.client.particle.definition.molang.compiler.function.query.EntityTypeRelationQuery(
+                        com.kltyton.bedrockruntime.client.particle.definition.molang.compiler.function.query.EntityTypeRelationQuery.Kind.LEASHED,
+                        values.toArray(MathValue[]::new)));
+        ToDoubleFunction<MolangInstance> headXRotation = instance -> {
+            Entity entity = instance.getAttachedEntity();
+            return entity == null ? 0.0 : EntityStateQuery.targetXRotation(entity);
+        };
+        ToDoubleFunction<MolangInstance> headYRotation = instance -> {
+            Entity entity = instance.getAttachedEntity();
+            return entity == null ? 0.0 : EntityStateQuery.targetYRotation(entity);
+        };
+        registerQueryFunction("query.head_x_rotation", args -> new Variable("query.head_x_rotation", headXRotation));
+        registerQueryFunction("query.head_y_rotation", args -> new Variable("query.head_y_rotation", headYRotation));
+        registerCompatibilityQuery("query.head_x_rotation", headXRotation);
+        registerCompatibilityQuery("query.head_y_rotation", headYRotation);
+        registerQueryVariable("query.is_enchanted", instance -> {
+            var stack = instance.getReferencedItem();
+            return stack != null && stack.isEnchanted() ? 1 : 0;
+        });
         registerQueryVariable("query.cardinal_player_facing", p -> p.getAttachedEntity() instanceof Player player
                 ? cardinalFacing(player, false) : 6.0);
         registerQueryVariable("query.day", p -> p.getAttachedEntity() == null ? 0.0
@@ -546,18 +625,27 @@ public final class MolangQueries {
         registerCompatibilityQuery("query.health", p -> p.getAttachedEntity() instanceof LivingEntity living ? living.getHealth() : 0.0);
         registerCompatibilityQuery("query.max_health", p -> p.getAttachedEntity() instanceof LivingEntity living ? living.getMaxHealth() : 0.0);
         registerCompatibilityQuery("query.death_ticks", p -> p.getAttachedEntity() instanceof LivingEntity living ? living.deathTime : 0.0);
+        registerCompatibilityQuery("query.fuse_time", p -> p.getAttachedEntity() instanceof net.minecraft.world.entity.item.PrimedTnt tnt
+                ? Math.max(0, tnt.getFuse()) / 20.0 : -1.0);
         registerCompatibilityQuery("query.current_squish_value", p -> p.getAttachedEntity() instanceof AbstractCubeMob cube ? cube.squish : 0.0);
         registerCompatibilityQuery("query.previous_squish_value", p -> p.getAttachedEntity() instanceof AbstractCubeMob cube ? cube.oSquish : 0.0);
         registerEntityQuery("query.is_alive", Entity::isAlive);
+        registerEntityQuery("query.is_jump_goal_jumping", entity -> entity.hasPose(Pose.LONG_JUMPING));
+        registerEntityQuery("query.is_in_ui", entity -> RenderFrameContext.isUiEntity());
+        registerEntityQuery("query.is_eating_mob", entity -> entity instanceof Frog frog
+                && frog.getTongueTarget().isPresent());
         registerEntityQuery("query.has_owner", entity -> entity instanceof TamableAnimal animal
                 && animal.getOwnerReference() != null);
         registerEntityQuery("query.is_laying_egg", entity -> entity instanceof Turtle turtle && turtle.isLayingEgg());
+        registerEntityQuery("query.is_pregnant", entity -> entity instanceof Turtle turtle && turtle.hasEgg());
         registerEntityQuery("query.is_standing", entity -> entity instanceof AbstractHorse horse && horse.isStanding()
                 || entity instanceof PolarBear bear && bear.isStanding());
         registerEntityQuery("query.is_resting", entity -> entity instanceof Bat bat && bat.isResting());
         registerEntityQuery("query.is_charging", entity -> entity instanceof net.minecraft.world.entity.monster.Vex vex && vex.isCharging()
                 || entity instanceof Blaze blaze && blaze.isOnFire()
                 || entity instanceof Ghast ghast && ghast.isCharging());
+        registerEntityQuery("query.is_admiring", entity -> entity instanceof Piglin piglin && piglin.getArmPose() == PiglinArmPose.ADMIRING_ITEM);
+        registerEntityQuery("query.is_celebrating", entity -> entity instanceof Raider raider && raider.isCelebrating());
         registerCompatibilityQuery("query.sneeze_counter", instance -> instance.getAttachedEntity() instanceof Panda panda
                 ? panda.getSneezeCounter() : 0.0);
         registerEntityQuery("query.show_bottom", entity -> entity instanceof EndCrystal crystal && crystal.showsBottom());
@@ -585,6 +673,8 @@ public final class MolangQueries {
         registerEntityQuery("query.is_grazing", entity -> entity instanceof AbstractHorse horse && horse.isEating());
         registerEntityQuery("query.is_interested", entity -> entity instanceof Wolf wolf && wolf.isInterested()
                 || entity instanceof Fox fox && fox.isInterested());
+        registerEntityQuery("query.is_shaking", entity -> entity instanceof LivingEntity living
+                && EntityStateQuery.isShaking(living));
         registerEntityQuery("query.is_shaking_wetness", entity -> entity instanceof Wolf wolf
                 && ((WolfQueryAccessor) wolf).kltyton_bedrock_runtime$isShakingWetness());
         registerEntityQuery("query.is_croaking", entity -> entity.hasPose(Pose.CROAKING));
@@ -606,6 +696,7 @@ public final class MolangQueries {
         registerEntityQuery("query.is_searching", entity -> entity instanceof Sniffer sniffer && sniffer.isSearching());
         registerEntityQuery("query.is_powered", entity -> entity instanceof Creeper creeper && creeper.isPowered()
                 || entity instanceof Bee bee && bee.hasNectar());
+        registerEntityQuery("query.is_shield_powered", entity -> entity instanceof net.minecraft.world.entity.boss.wither.WitherBoss wither && wither.isPowered());
         registerEntityQuery("query.is_ignited", entity -> entity instanceof Creeper creeper && creeper.isIgnited());
         registerEntityQuery("query.is_chested", entity -> entity instanceof AbstractChestedHorse horse && horse.hasChest());
         registerEntityQuery("query.is_in_water", Entity::isInWater);
@@ -633,7 +724,11 @@ public final class MolangQueries {
                 || entity instanceof AbstractHorse horse && horse.isTamed());
         registerEntityQuery("query.is_sheared", entity -> entity instanceof Sheep sheep && sheep.isSheared()
                 || entity instanceof Bogged bogged && bogged.isSheared());
+        registerQueryVariable("query.variant", context -> variant(context.getAttachedEntity()));
+        registerQueryVariable("query.mark_variant", context -> markVariant(context.getAttachedEntity()));
         registerEntityQuery("query.blocking", entity -> entity instanceof LivingEntity living && living.isBlocking());
+        registerQueryVariable("query.base_swing_duration", instance -> swingDuration(instance, false));
+        registerQueryVariable("query.modified_swing_duration", instance -> swingDuration(instance, true));
         registerCompatibilityQuery("query.item_is_charged", ItemChargedFunction::mainHand);
         registerCompatibilityQuery("query.is_item_equipped", ItemEquippedFunction::mainHand);
         registerCompatibilityQuery("query.equipment_count", instance -> {
@@ -655,6 +750,61 @@ public final class MolangQueries {
         registerEntityQuery("query.is_baby", entity -> entity instanceof LivingEntity living && living.isBaby());
         registerEntityQuery("query.is_sleeping", entity -> entity instanceof LivingEntity living && living.isSleeping());
         registerEntityQuery("query.is_gliding", entity -> entity instanceof LivingEntity living && living.isFallFlying());
+        registerEntityQuery("query.is_illager_captain", entity -> entity instanceof Raider raider && raider.isPatrolLeader());
+        registerEntityQuery("query.can_power_jump", entity -> entity instanceof net.minecraft.world.entity.PlayerRideableJumping);
+        registerEntityQuery("query.is_dangerous", entity ->
+                entity instanceof net.minecraft.world.entity.projectile.hurtingprojectile.WitherSkull skull && skull.isDangerous());
+        registerEntityQuery("query.is_ghost", entity -> false);
+        registerEntityQuery("query.is_emoting", entity -> false);
+        registerQueryVariable("query.ticks_since_last_kinetic_weapon_hit", instance -> -1.0);
+        registerCompatibilityQuery("query.overlay_alpha", instance -> {
+            Entity entity = instance.getAttachedEntity();
+            if (entity instanceof net.minecraft.world.entity.boss.wither.WitherBoss wither) {
+                int invul = wither.getInvulnerableTicks();
+                return invul > 0 ? Math.min(1.0, invul / 220.0) : 0.0;
+            }
+            return 0.0;
+        });
+        registerCompatibilityQuery("query.heartbeat_phase", instance -> {
+            Entity entity = instance.getAttachedEntity();
+            if (entity instanceof net.minecraft.world.entity.monster.warden.Warden warden) {
+                float partial = RenderFrameContext.currentOr(
+                        Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
+                return warden.getHeartAnimation(partial);
+            }
+            return 0.0;
+        });
+        registerEntityQuery("query.is_sonic_boom", entity ->
+                entity instanceof net.minecraft.world.entity.monster.warden.Warden warden
+                        && warden.sonicBoomAnimationState.isStarted());
+        registerEntityQuery("query.is_stalking", entity ->
+                entity instanceof net.minecraft.world.entity.monster.warden.Warden warden
+                        && warden.getAngerLevel().isAngry());
+        registerCompatibilityQuery("query.time_since_last_vibration_detection", instance -> {
+            Entity entity = instance.getAttachedEntity();
+            if (entity instanceof net.minecraft.world.entity.monster.warden.Warden warden) {
+                float partial = RenderFrameContext.currentOr(
+                        Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
+                float tendril = warden.getTendrilAnimation(partial);
+                return tendril > 0.0F ? (1.0F - tendril) * 0.5 : 100.0;
+            }
+            return 100.0;
+        });
+        registerCompatibilityQuery("query.unhappy_counter", instance ->
+                instance.getAttachedEntity() instanceof net.minecraft.world.entity.npc.villager.AbstractVillager villager
+                        ? villager.getUnhappyCounter() : 0.0);
+        registerCompatibilityQuery("query.yaw_speed", instance -> {
+            Entity entity = instance.getAttachedEntity();
+            return entity == null ? 0.0
+                    : Mth.wrapDegrees(entity.getYRot() - entity.yRotO) * entity.level().tickRateManager().tickrate();
+        });
+        registerCompatibilityQuery("query.shield_blocking_bob", instance -> {
+            Entity entity = instance.getAttachedEntity();
+            if (!(entity instanceof LivingEntity living) || !living.isBlocking()) return 0.0;
+            float partial = RenderFrameContext.currentOr(
+                    Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
+            return Math.sin((entity.tickCount + partial) * 0.25) * 0.25;
+        });
         bindEntityQueryVariables();
         FROZEN_QUERIES.putAll(UNFROZEN_QUERIES);
         UNFROZEN_QUERIES.clear();

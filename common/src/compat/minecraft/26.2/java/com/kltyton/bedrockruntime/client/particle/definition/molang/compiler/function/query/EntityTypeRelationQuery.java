@@ -2,15 +2,19 @@ package com.kltyton.bedrockruntime.client.particle.definition.molang.compiler.fu
 
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Leashable;
 import com.kltyton.bedrockruntime.particle.BedrockParticles;
 import com.kltyton.bedrockruntime.client.particle.api.MolangInstance;
 import com.kltyton.bedrockruntime.client.particle.definition.molang.compiler.MathValue;
 import com.kltyton.bedrockruntime.client.particle.definition.molang.compiler.function.MathFunction;
 import com.kltyton.bedrockruntime.client.particle.definition.molang.compiler.value.MolangValueEquality;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /** Matches an entity associated with the current Molang scope by type. */
 public final class EntityTypeRelationQuery extends MathFunction {
-    public enum Kind { RIDING, OWNER, OWNER_IDENTIFIER }
+    public enum Kind { RIDING, OWNER, OWNER_IDENTIFIER, LEASHED }
 
     private final Kind kind;
     private final MathValue[] arguments;
@@ -41,6 +45,27 @@ public final class EntityTypeRelationQuery extends MathFunction {
         Entity entity = instance.getAttachedEntity();
         if (entity == null) return kind == Kind.OWNER ? contentError("requires an entity") : 0.0;
 
+        if (kind == Kind.LEASHED) {
+            List<Identifier> requested = new ArrayList<>(arguments.length);
+            for (MathValue argument : arguments) {
+                String name = argument.getString(instance);
+                if (name == null) {
+                    return contentError("requires string arguments");
+                }
+                Identifier identifier = Identifier.tryParse(name);
+                if (identifier != null) requested.add(identifier);
+            }
+            if (requested.isEmpty()) return 0.0;
+            List<Entity> leashed = entity.level().getEntities(entity, entity.getBoundingBox().inflate(16.0),
+                    candidate -> candidate instanceof Leashable leashable && leashable.getLeashHolder() == entity);
+            for (Entity candidate : leashed) {
+                for (Identifier identifier : requested) {
+                    if (BedrockEntityTypes.matches(identifier, candidate)) return 1.0;
+                }
+            }
+            return 0.0;
+        }
+
         Entity target = kind == Kind.RIDING ? entity.getVehicle() : entity;
         if (target == null) return 0.0;
 
@@ -68,8 +93,12 @@ public final class EntityTypeRelationQuery extends MathFunction {
     private static final java.util.Set<String> REPORTED_ERRORS = java.util.concurrent.ConcurrentHashMap.newKeySet();
 
     @Override public String getName() {
-        if (kind == Kind.OWNER_IDENTIFIER) return "query.owner_identifier";
-        return kind == Kind.OWNER ? "query.is_owner_identifier_any" : "query.is_riding_any_entity_of_type";
+        return switch (kind) {
+            case OWNER_IDENTIFIER -> "query.owner_identifier";
+            case OWNER -> "query.is_owner_identifier_any";
+            case LEASHED -> "query.has_any_leashed_entity_of_type";
+            case RIDING -> "query.is_riding_any_entity_of_type";
+        };
     }
     @Override public int getMinArgs() { return 0; }
     @Override public MathValue[] getArgs() { return arguments.clone(); }

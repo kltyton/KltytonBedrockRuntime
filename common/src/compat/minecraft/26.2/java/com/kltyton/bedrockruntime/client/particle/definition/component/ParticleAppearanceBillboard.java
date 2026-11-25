@@ -218,12 +218,13 @@ public record ParticleAppearanceBillboard(FloatMolangExp2 size, FaceCameraMode f
     }
 
     public record Direction(Mode mode, float minSpeedThreshold, FloatMolangExp3 customDirection) {
-        public static final Direction DEFAULT = new Direction(Direction.Mode.DERIVE_FROM_VELOCITY, 0.1F, FloatMolangExp3.ZERO);
+        private static final float DEFAULT_SPEED_THRESHOLD = 0.01F;
+        public static final Direction DEFAULT = new Direction(Mode.DERIVE_FROM_VELOCITY, DEFAULT_SPEED_THRESHOLD, FloatMolangExp3.ZERO);
         public static final MapCodec<Direction> CUSTOM_MODE_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
                 FloatMolangExp3.ZERO_COMPONENT_CODEC.lenientOptionalFieldOf("custom_direction", FloatMolangExp3.ZERO).forGetter(Direction::customDirection)
         ).apply(instance, l -> new Direction(Mode.CUSTOM_DIRECTION, 0, l)));
         public static final MapCodec<Direction> SPEED_MODE_CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
-                Codec.FLOAT.lenientOptionalFieldOf("min_speed_threshold", 0.0F).forGetter(Direction::minSpeedThreshold)
+                Codec.FLOAT.lenientOptionalFieldOf("min_speed_threshold", DEFAULT_SPEED_THRESHOLD).forGetter(Direction::minSpeedThreshold)
         ).apply(instance, f -> new Direction(Mode.DERIVE_FROM_VELOCITY, f, FloatMolangExp3.ZERO)));
         public static final Codec<Direction> CODEC = RecordCodecBuilder.create(instance -> instance.group(
                 Mode.CODEC.lenientOptionalFieldOf("mode").forGetter(direction -> Optional.of(direction.mode)),
@@ -235,7 +236,7 @@ public record ParticleAppearanceBillboard(FloatMolangExp2 size, FaceCameraMode f
             Mode resolved = mode.orElse(Mode.DERIVE_FROM_VELOCITY);
             return resolved == Mode.CUSTOM_DIRECTION
                     ? new Direction(resolved, 0.0F, custom.orElse(FloatMolangExp3.ZERO))
-                    : new Direction(resolved, threshold.orElse(0.0F), FloatMolangExp3.ZERO);
+                    : new Direction(resolved, threshold.orElse(DEFAULT_SPEED_THRESHOLD), FloatMolangExp3.ZERO);
         }));
 
         @Override

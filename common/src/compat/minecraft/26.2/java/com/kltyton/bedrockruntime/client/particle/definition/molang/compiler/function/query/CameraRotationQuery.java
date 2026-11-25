@@ -21,10 +21,13 @@ public final class CameraRotationQuery extends MathFunction {
     @Override
     public double compute(MolangInstance instance) {
         if (arguments.length != 1) return invalidAxis();
-        float selected = (float) arguments[0].get(instance);
+        double requestedAxis = arguments[0].get(instance);
+        return readAxis(instance.getReferencedItem() == null ? camera(instance) : null, requestedAxis);
+    }
+
+    public static double readAxis(@Nullable Camera camera, double axis) {
+        float selected = (float) axis;
         if (!(selected > -1.0F && selected < 2.0F)) return invalidAxis();
-        if (instance.getReferencedItem() != null) return 0.0;
-        Camera camera = camera(instance);
         if (camera == null) return 0.0;
         return (int) selected == 0 ? camera.xRot() : camera.yRot();
     }
@@ -35,7 +38,7 @@ public final class CameraRotationQuery extends MathFunction {
                 ? manager.previewCamera() : Minecraft.getInstance().gameRenderer.mainCamera();
     }
 
-    private double invalidAxis() {
+    private static double invalidAxis() {
         if (REPORTED_ARGUMENTS.compareAndSet(false, true)) {
             BedrockParticles.LOGGER.warn("query.camera_rotation requires one axis in the range 0 to 1");
         }

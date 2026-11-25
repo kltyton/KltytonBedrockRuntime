@@ -41,12 +41,14 @@ import com.kltyton.bedrockruntime.client.particle.definition.DefinedParticleEffe
 import com.kltyton.bedrockruntime.client.particle.definition.molang.MolangExp;
 import com.kltyton.bedrockruntime.client.particle.access.IEntity;
 import com.kltyton.bedrockruntime.client.particle.network.PSClientPacketHandler;
+import com.kltyton.bedrockruntime.internal.mochafloats.parser.ParseException;
 
 import com.kltyton.bedrockruntime.client.particle.runtime.screen.IParticleManagerScreen;
 import com.kltyton.bedrockruntime.client.particle.runtime.screen.PreviewParticleScope;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.io.UncheckedIOException;
 import java.lang.ref.WeakReference;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -488,15 +490,24 @@ public final class MolangParticleEngine extends MolangParticleManager implements
                     BedrockParticles.LOGGER.warn("Ignoring Bedrock particle {} because its id conflicts with a Java definition", id);
                     continue;
                 }
+                ParticlePreset particlePreset;
+                EmitterPreset emitterPreset;
+                try {
+                    particlePreset = new ParticlePreset(effect);
+                    emitterPreset = new EmitterPreset(
+                            effect.description.type(),
+                            effect.orderedEmitterComponents,
+                            effect.events,
+                            effect.molangVersion(),
+                            effect.usesBedrockItemNames()
+                    );
+                } catch (UncheckedIOException exception) {
+                    if (!(exception.getCause() instanceof ParseException syntaxError)) throw exception;
+                    BedrockParticles.LOGGER.error("Invalid particle Molang for {} in {}: {}",
+                            id, loaded.fileId(), syntaxError.getMessage());
+                    continue;
+                }
                 if (loaded.javaDefinition()) nativeAliases.addAll(aliases);
-                ParticlePreset particlePreset = new ParticlePreset(effect);
-                EmitterPreset emitterPreset = new EmitterPreset(
-                        effect.description.type(),
-                        effect.orderedEmitterComponents,
-                        effect.events,
-                        effect.molangVersion(),
-                        effect.usesBedrockItemNames()
-                );
                 for (Identifier alias : aliases) {
                     registerAlias(id2Effect, id2Particle, id2Emitter, alias, effect, particlePreset, emitterPreset);
                 }

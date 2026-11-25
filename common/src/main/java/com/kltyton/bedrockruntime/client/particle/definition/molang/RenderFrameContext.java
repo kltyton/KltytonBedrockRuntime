@@ -5,6 +5,7 @@ import java.util.Arrays;
 /** Frame identity and partial-tick scopes for client rendering. */
 public final class RenderFrameContext {
     private static final ThreadLocal<FrameStack> FRAMES = new ThreadLocal<>();
+    private static final ThreadLocal<Boolean> UI_ENTITY = new ThreadLocal<>();
     private static long frameIndex;
     private static float framePartialTick = 1.0F;
 
@@ -45,6 +46,20 @@ public final class RenderFrameContext {
     public static boolean isActive() {
         FrameStack frames = FRAMES.get();
         return frames != null && frames.depth > 0;
+    }
+
+    public static boolean isUiEntity() {
+        return Boolean.TRUE.equals(UI_ENTITY.get());
+    }
+
+    public static boolean enterUiEntity() {
+        boolean enclosing = isUiEntity();
+        UI_ENTITY.set(true);
+        return enclosing;
+    }
+
+    public static void exitUiEntity(boolean enclosing) {
+        if (!enclosing) UI_ENTITY.remove();
     }
 
     public static float currentOr(float fallback) {

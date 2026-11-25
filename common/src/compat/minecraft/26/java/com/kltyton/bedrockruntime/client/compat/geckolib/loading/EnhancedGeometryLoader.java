@@ -41,14 +41,16 @@ public final class EnhancedGeometryLoader extends GeckoLibGsonLoader {
     @Override
     public BakedGeoModel bakeGeckoLibModelFile(Identifier resource, JsonObject json) {
         EnhancedModelData data = EnhancedModelData.parse(resource.toString(), json);
-        // GeckoLib 5's intermediate polygon schema cannot represent all Bedrock polygons.
+        // GeckoLib 5's intermediate polygon schema cannot represent all Bedrock polygons or texture_meshes.
         // Keep those in the extension; its native baker continues to own cubes and locators.
         JsonObject cubeGeometry = json.deepCopy();
         for (var definition : cubeGeometry.getAsJsonArray("minecraft:geometry")) {
             var object = definition.getAsJsonObject();
             if (object.has("bones")) {
                 for (var bone : object.getAsJsonArray("bones")) {
-                    bone.getAsJsonObject().remove("poly_mesh");
+                    var b = bone.getAsJsonObject();
+                    b.remove("poly_mesh");
+                    b.remove("texture_meshes");
                 }
             }
         }

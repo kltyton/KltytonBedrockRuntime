@@ -3,6 +3,7 @@ package com.kltyton.bedrockruntime.mixin.entity;
 import com.kltyton.bedrockruntime.api.entity.BoneHitboxEntity;
 
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -10,14 +11,15 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /**
- * CN: 任一实体使用 OBB 物理碰撞时，取消该实体对的原版 AABB 推挤，避免两套响应叠加。
- * EN: Cancels vanilla AABB pushing for a pair when either entity uses OBB physics, preventing duplicate responses.
+ * Keeps vanilla pushing for players without registered parts and avoids duplicate pushing for OBB contacts.
  */
 @Mixin(Entity.class)
 public abstract class EntityPushMixin {
     @Inject(method = "push(Lnet/minecraft/world/entity/Entity;)V", at = @At("HEAD"), cancellable = true)
     private void kltyton_bedrock_runtime$replaceVanillaEntityPush(Entity other, CallbackInfo callbackInfo) {
         Entity self = (Entity) (Object) this;
+        if ((self instanceof Player && !(self instanceof BoneHitboxEntity))
+                || (other instanceof Player && !(other instanceof BoneHitboxEntity))) return;
         if (kltyton_bedrock_runtime$usesObbPhysics(self) || kltyton_bedrock_runtime$usesObbPhysics(other)) {
             callbackInfo.cancel();
         }

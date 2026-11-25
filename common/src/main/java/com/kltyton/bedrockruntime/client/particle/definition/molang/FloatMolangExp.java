@@ -4,20 +4,29 @@ import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
 import com.kltyton.bedrockruntime.client.particle.api.MolangInstance;
 import com.kltyton.bedrockruntime.client.particle.definition.molang.compiler.MathValue;
+import org.jetbrains.annotations.Nullable;
 
 public class FloatMolangExp extends MolangExp {
     public static final FloatMolangExp ZERO = FloatMolangExp.ofConstant(0);
     public static final FloatMolangExp ONE = FloatMolangExp.ofConstant(1);
-    public static final Codec<FloatMolangExp> CODEC = Codec.either(Codec.either(Codec.FLOAT, Codec.BOOL), Codec.STRING).xmap(
+    private static final Codec<FloatMolangExp> SCALAR_CODEC = Codec.either(Codec.either(Codec.FLOAT, Codec.BOOL), Codec.STRING).xmap(
             either -> either.map(value -> value.map(f -> new FloatMolangExp(f, ""),
                     b -> new FloatMolangExp(b ? 1.0F : 0.0F, "")), s -> new FloatMolangExp(0.0F, s)),
             molang -> molang.expStr.isEmpty() ? Either.left(Either.left(molang.constant)) : Either.right(molang.expStr)
     );
+    public static final Codec<FloatMolangExp> CODEC = LegacyParticleMolang.extend(SCALAR_CODEC,
+            legacy -> new FloatMolangExp(0.0F, legacy.expression(), legacy), molang -> molang.legacy);
     private final float constant;
+    private final @Nullable LegacyParticleMolang legacy;
 
     public FloatMolangExp(float constant, String expression) {
+        this(constant, expression, null);
+    }
+
+    private FloatMolangExp(float constant, String expression, @Nullable LegacyParticleMolang legacy) {
         super(expression);
         this.constant = (float) MathValue.normalize(constant);
+        this.legacy = legacy;
     }
 
     public float getConstant() {

@@ -5,21 +5,19 @@ import com.kltyton.bedrockruntime.client.particle.platform.ParticleClientBootstr
 import com.kltyton.bedrockruntime.client.particle.platform.ParticleClientPlatforms;
 import com.kltyton.bedrockruntime.client.compat.geckolib.KltytonBedrockRuntimeNeoForgeGeckoClient;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 
-import com.kltyton.bedrockruntime.Constants;
 import com.kltyton.bedrockruntime.client.config.BoneHitboxClientOptions;
 import com.kltyton.bedrockruntime.client.render.vanilla.VanillaModelPartSelectionLayer;
 import com.kltyton.bedrockruntime.client.selection.service.BonePartSelectionClient;
 import com.kltyton.bedrockruntime.network.protocol.BoneHitboxNetworking;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.model.EntityModel;
 import net.minecraft.world.phys.EntityHitResult;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.LivingEntityRenderer;
-import net.minecraft.client.renderer.entity.layers.RenderLayer;
+import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.PlayerModelType;
 import net.neoforged.bus.api.IEventBus;
@@ -36,7 +34,6 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
  * EN: NeoForge client bootstrap.
  */
 public final class KltytonBedrockRuntimeNeoForgeClient {
-    private static final Method ADD_LAYER = findAddLayerMethod();
 
     private KltytonBedrockRuntimeNeoForgeClient() {
     }
@@ -114,21 +111,8 @@ public final class KltytonBedrockRuntimeNeoForgeClient {
         }
     }
 
-    private static void addVanillaLayer(LivingEntityRenderer<?, ?, ?> renderer) {
-        try {
-            ADD_LAYER.invoke(renderer, VanillaModelPartSelectionLayer.createRaw(renderer));
-        } catch (IllegalAccessException | InvocationTargetException exception) {
-            Constants.LOG.warn("Failed to add vanilla model part selection layer.", exception);
-        }
-    }
-
-    private static Method findAddLayerMethod() {
-        try {
-            Method method = LivingEntityRenderer.class.getDeclaredMethod("addLayer", RenderLayer.class);
-            method.setAccessible(true);
-            return method;
-        } catch (NoSuchMethodException exception) {
-            throw new IllegalStateException("LivingEntityRenderer#addLayer was not found", exception);
-        }
+    private static <S extends LivingEntityRenderState, M extends EntityModel<? super S>> void addVanillaLayer(
+            LivingEntityRenderer<?, S, M> renderer) {
+        renderer.addLayer(new VanillaModelPartSelectionLayer<>(renderer));
     }
 }

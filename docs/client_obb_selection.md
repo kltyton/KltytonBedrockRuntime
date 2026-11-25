@@ -5,7 +5,7 @@
 - Vanilla `ModelPart` cubes are captured after animation setup. / 原版 `ModelPart` cube 在动画设置完成后捕获。
 - GeckoLib cubes are captured through GeckoLib render events; GeckoLib is a required dependency. / GeckoLib cube 通过 GeckoLib 渲染事件捕获；GeckoLib 是必需依赖。
 - A cube is recorded only when its entity implements `BoneHitboxEntity` and its `ObbBoneKey` matches the entity's mandatory registration method. / 只有实体实现 `BoneHitboxEntity` 且 `ObbBoneKey` 命中强制注册方法时才会记录 cube。
-- `ALL`, `BASE`, and `HUMAN_BASE` are selectors, not pre-authored hitbox dimensions. `HUMAN_BASE` adds both held items to the six `BASE` body parts and is registered by the built-in player mixin; other entities opt in explicitly. / `ALL`、`BASE` 与 `HUMAN_BASE` 都是选择器，不是手写碰撞尺寸；`HUMAN_BASE` 在六个 `BASE` 身体部位外加入左右手持物，内置玩家 Mixin 已注册该预设，其他实体需显式接入。
+- `ALL`, `BASE`, and `HUMAN_BASE` select model parts. `HUMAN_BASE` adds both held items to the six `BASE` body parts. A consuming mod can opt in players through the [player OBB example](wiki/Player-OBB-Opt-In.md). / `ALL`、`BASE` 与 `HUMAN_BASE` 用于选取模型部位。`HUMAN_BASE` 在六个 `BASE` 身体部位外加入左右手持物。需要玩家部位的模组可参考[玩家 OBB 示例](wiki/Player-OBB-Opt-In.md)显式注册。
 
 Each snapshot contains local bounds, an OBB-derived world broad-phase bound, local/world matrices, composable attributes, collision mode, and optional Geo animation state. Vanilla entity AABBs are not used to decide OBB-to-OBB contact. / 每个快照包含本地边界、由 OBB 推导的世界粗筛范围、本地/世界矩阵、可组合属性、碰撞模式及可选 Geo 动画状态；OBB 接触判定不使用原版实体 AABB。
 

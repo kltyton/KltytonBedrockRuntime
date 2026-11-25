@@ -28,7 +28,7 @@ public void kltyton_bedrock_runtime$registerObbBones(ObbBoneRegistrar registrar)
 
 An empty registration method is a programming error and throws when the entity OBB state is first accessed. / 空注册方法属于编程错误，首次访问该实体 OBB 状态时会抛出异常。
 
-`HUMAN_BASE` is a reusable selector. The built-in player mixin registers it; other humanoids must opt in explicitly. Canonical held-item keys are available through `ObbBuiltinBones.leftHeldItem(cubeIndex)` and `rightHeldItem(cubeIndex)`; common model names such as `leftItem`, `rightItem`, `left_hand_item`, `main_hand_item`, and the `held_item` source are also matched. / `HUMAN_BASE` 是可复用选择器；内置玩家 Mixin 已注册它，其他人形实体需显式接入。规范手持物键可通过 `ObbBuiltinBones.leftHeldItem(cubeIndex)` 与 `rightHeldItem(cubeIndex)` 创建，同时兼容 `leftItem`、`rightItem`、`left_hand_item`、`main_hand_item` 以及 `held_item` 来源等常见命名。
+`HUMAN_BASE` is a reusable selector. Mods opt players in by adding the [player Mixin example](../examples/player-obb/src/main/java/com/kltyton/bedrockruntime/example/playerobb/mixin/PlayerBoneHitboxMixin.java) to their own common Mixin configuration. See the [player OBB guide](wiki/Player-OBB-Opt-In.md) for setup and event usage. Use `ObbBuiltinBones.leftHeldItem(cubeIndex)` and `rightHeldItem(cubeIndex)` to construct held-item keys. / `HUMAN_BASE` 是可复用选择器。需要玩家部位的模组可以把[玩家 Mixin 示例](../examples/player-obb/src/main/java/com/kltyton/bedrockruntime/example/playerobb/mixin/PlayerBoneHitboxMixin.java)加入自己的通用 Mixin 配置。接入和事件用法见[玩家 OBB 指南](wiki/Player-OBB-Opt-In.md)。手持物键可通过 `ObbBuiltinBones.leftHeldItem(cubeIndex)` 和 `rightHeldItem(cubeIndex)` 创建。
 
 ## Attributes, Not Types / 属性而非类型
 
@@ -46,7 +46,7 @@ CN：`ATTACK`、`HURT`、`COLLISION` 是可修改、可组合的 `ObbBoneAttribu
 - `SOFT`: push response / 推挤响应。
 - `HARD`: continuous local-player OBB movement clipping plus one persistent-manifold, zero-restitution impulse solve per server entity pair / 本地玩家连续 OBB 位移裁剪，加上服务端每个实体对一次持续接触流形、零恢复系数冲量求解。
 
-When either entity in a pair has opted into physical OBB collision, Kltyton Bedrock Runtime cancels vanilla `Entity.push(Entity)` for that pair. This prevents the original AABB push from being added on top of `SOFT`/`HARD`. A permanently registered collision remains an OBB-physics opt-in when its discovered bones are temporarily disabled; disabling those bones produces no physical collision instead of silently restoring AABB pushing. / 当实体对中的任一方接入 OBB 物理碰撞时，Kltyton Bedrock Runtime 会取消该实体对的原版 `Entity.push(Entity)`，避免原版 AABB 推挤与 `SOFT`/`HARD` 叠加。永久注册碰撞后，即使暂时关闭已发现骨骼，该实体仍保持 OBB 物理接入状态；此时结果是无物理碰撞，而不是静默恢复 AABB 推挤。
+Players without registered parts keep vanilla `Entity.push(Entity)`. For other pairs, KBR suppresses vanilla pushing when either entity has opted into OBB physics. The pair then follows its `SOFT` or `HARD` response. Temporarily disabled bones remain part of the same registration and produce no physical response while disabled. / 未注册部位的玩家沿用原版 `Entity.push(Entity)`。其他实体对中，任一方接入 OBB 物理碰撞时使用对应的 `SOFT` 或 `HARD` 响应。临时关闭的骨骼仍保有原注册，关闭期间暂停物理响应。
 
 Runtime state API / 运行时状态 API：
 
@@ -251,7 +251,7 @@ For walkable slopes, the center-foot ray owns the support height. Corner samples
 - No rendering client means no fresh visual-model snapshots or client contact reports. / 没有客户端渲染时，不会产生新的视觉模型快照或接触报告。
 - In 26.2, a culled `BoneHitboxEntity` within 32 blocks is sampled to include its model bounds in culling. The sample runs model/layer callbacks with a private `SubmitNodeStorage`; its deferred draw tasks are not enqueued into the active frame. Vanilla distance and frustum checks still decide regular rendering using the expanded bounds. Beyond that range, only normally rendered cubes participate, except the local-player and projectile fallbacks below. Other versions keep their previous behavior. / 26.2 中，32 格内被视锥剔除的 `BoneHitboxEntity` 会单独采样，以便把模型边界计入剔除范围。采样通过私有 `SubmitNodeStorage` 运行模型和渲染层回调；其中的延迟绘制任务不会加入当前帧。原版距离与视锥检查仍依据扩展后的边界决定常规绘制。超过该范围后，除下述本地玩家与投射物回退外，仅通常渲染的 cube 参与。其他版本保持原有行为。
 - Contact events and rotating/animating collider updates remain snapshot-discrete. Local-player translational `HARD` movement now uses swept OBB SAT, but an OBB that rotates or teleports completely through another object between two model snapshots can still tunnel. / 接触事件以及旋转/动画碰撞体更新仍按快照离散执行；本地玩家平移 `HARD` 已使用 swept OBB SAT，但若某个 OBB 在两次模型快照间旋转或瞬移并完全穿过目标，仍可能发生穿透。
-- First-person local-player physics uses six rotated OBBs with vanilla player-model proportions when no full player model was submitted. Third-person/remote players still use captured animated cubes. / 第一人称未提交完整玩家模型时，物理系统使用六个按原版玩家模型比例生成的旋转 OBB；第三人称与远程玩家仍使用捕获的动画 cube。
+- When the player has registered body parts, first-person physics can use boxes with vanilla player-model proportions if the renderer did not submit a full player model. Third-person and remote players use the captured animated cubes. / 玩家已注册身体部位且第一人称渲染未提交完整模型时，物理系统可按原版玩家模型比例生成对应部位框。第三人称与远程玩家使用捕获的动画 cube。
 - Vanilla projectiles without traversable model cubes use their current AABB as a synthetic axis-aligned OBB attack source; target bones remain visual-model OBBs. / 无法遍历模型 cube 的原版投射物使用当前 AABB 作为合成轴对齐攻击 OBB，目标骨骼仍为视觉模型 OBB。
 
 ## Protocol and limits / 协议与限制

@@ -1,16 +1,14 @@
 package com.kltyton.bedrockruntime.client.particle.runtime.physics;
 
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
-import net.minecraft.util.Mth;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /** Sweeps particle centers against terrain, then resolves normal and tangential velocity. */
 public final class ParticleCollision {
@@ -19,45 +17,31 @@ public final class ParticleCollision {
 
     private ParticleCollision() {}
 
-    public static Result resolve(Level level, Vec3 previous, Vec3 position, Vec3 velocity,
-                                 float radius, float drag, float restitution) {
-        Vec3 displacement = position.subtract(previous);
-        double length = displacement.length();
-        if (length > 1.0) previous = position.subtract(displacement.scale(1.0 / length));
-        AABB query = new AABB(Math.min(previous.x, position.x) - radius, Math.min(previous.y, position.y) - radius,
-                Math.min(previous.z, position.z) - radius, Math.max(previous.x, position.x) + radius,
-                Math.max(previous.y, position.y) + radius, Math.max(previous.z, position.z) + radius);
-        List<AABB> shapes = new ArrayList<>();
-        BlockPos.MutableBlockPos block = new BlockPos.MutableBlockPos();
-        for (int bx = Mth.floor(query.minX) - 1; bx <= Mth.floor(query.maxX) + 1; bx++) {
-            for (int bz = Mth.floor(query.minZ) - 1; bz <= Mth.floor(query.maxZ) + 1; bz++) {
-                for (int by = Mth.floor(query.maxY) + 1; by >= Mth.floor(query.minY) - 1; by--) {
-                    block.set(bx, by, bz);
-                    VoxelShape shape = level.getBlockState(block).getCollisionShape(level, block, CollisionContext.empty());
-                    if (shape.isEmpty()) continue;
-                    for (AABB box : shape.toAabbs()) {
-                        AABB worldBox = box.move(bx, by, bz);
-                        if (worldBox.intersects(query)) shapes.add(worldBox);
-                    }
-                }
-            }
+    public static Result resolve(ClientLevel level, Vec3 previous, Vec3 position, Vec3 velocity,
+                                 float radius, float drag, float restitution, boolean stopOnContact) {
+        double motionSquared = position.distanceToSqr(previous);
+        if (!Double.isFinite(motionSquared) || motionSquared < DIRECTION_EPSILON * DIRECTION_EPSILON) {
+            return new Result(position, velocity, null, false);
         }
-        Vec3 normal = Vec3.ZERO;
-        boolean collided = false;
+        // Allow for boxes protruding past their source block, such as fences and moving pistons.
+        double margin = radius + 1.0 + CONTACT_BIAS;
+        AABB bounds = terrainBounds(level).inflate(margin);
+        Contact first = null;
+        boolean grounded = false;
         for (int pass = 0; pass < 3; pass++) {
-            Hit closest = null;
-            for (AABB shape : shapes) {
-                Hit hit = sweep(previous, position, shape.inflate(radius));
-                if (hit != null && (closest == null || hit.fraction() < closest.fraction())) closest = hit;
-            }
-            if (closest == null) break;
-            collided = true;
-            normal = closest.normal();
-            double fraction = closest.fraction();
-            if (fraction != 1.0 && fraction > CONTACT_BIAS) fraction -= CONTACT_BIAS;
-            double remaining = position.subtract(previous).dot(normal) * (1.0 - fraction);
-            position = position.subtract(normal.scale(remaining));
-            velocity = velocity.subtract(normal.scale((1.0 + restitution) * velocity.dot(normal)));
+            Hit closest = firstHit(level, bounds, previous, position, radius, margin);
+            if (closest == null) return new Result(position, velocity, first, grounded);
+            Vec3 normal = closest.normal();
+            Vec3 contactPoint = previous.lerp(position, closest.fraction());
+            if (first == null) first = new Contact(contactPoint, normal, velocity);
+            grounded |= normal.y > 0.0;
+            if (stopOnContact) return new Result(contactPoint, velocity, first, grounded);
+
+            Vec3 remainder = position.subtract(contactPoint);
+            previous = contactPoint.add(normal.scale(CONTACT_BIAS));
+            position = previous.add(remainder.subtract(normal.scale(remainder.dot(normal))));
+            double approach = velocity.dot(normal);
+            if (approach < 0.0) velocity = velocity.subtract(normal.scale((1.0 + restitution) * approach));
             Vec3 tangent = velocity.subtract(normal.scale(velocity.dot(normal)));
             double tangentLength = tangent.length();
             if (tangentLength > 0.0) {
@@ -65,13 +49,63 @@ public final class ParticleCollision {
                 velocity = velocity.add(tangent.scale(tangentScale - 1.0));
             }
         }
-        return new Result(position, velocity, normal, collided);
+        return new Result(previous, velocity, first, grounded);
+    }
+
+    private static AABB terrainBounds(ClientLevel level) {
+        var storage = level.getChunkSource().storage;
+        int radius = storage.chunkRadius;
+        int x = storage.viewCenterX;
+        int z = storage.viewCenterZ;
+        return new AABB(Math.max(-Level.MAX_LEVEL_SIZE, (x - radius) * 16.0), level.getMinY(),
+                Math.max(-Level.MAX_LEVEL_SIZE, (z - radius) * 16.0),
+                Math.min(Level.MAX_LEVEL_SIZE, (x + radius + 1) * 16.0), level.getMaxY() + 1.0,
+                Math.min(Level.MAX_LEVEL_SIZE, (z + radius + 1) * 16.0));
+    }
+
+    private static @Nullable Hit firstHit(ClientLevel level, AABB bounds, Vec3 from, Vec3 to, float radius, double margin) {
+        if (from.equals(to)) return null;
+        Vec3 scanFrom = bounds.contains(from) ? from : bounds.clip(from, to).orElse(null);
+        if (scanFrom == null) return null;
+        Vec3 scanTo = bounds.contains(to) ? to : bounds.clip(to, from).orElse(null);
+        if (scanTo == null) return null;
+        var sweep = new TerrainSweep(level, from, to, radius);
+        var box = AABB.ofSize(scanTo, 2.0 * margin, 2.0 * margin, 2.0 * margin);
+        BlockGetter.forEachBlockIntersectedBetween(scanFrom, scanTo, box, sweep::visit);
+        return sweep.closest;
+    }
+
+    private static final class TerrainSweep {
+        private final ClientLevel level;
+        private final Vec3 from;
+        private final Vec3 to;
+        private final float radius;
+        private @Nullable Hit closest;
+
+        private TerrainSweep(ClientLevel level, Vec3 from, Vec3 to, float radius) {
+            this.level = level;
+            this.from = from;
+            this.to = to;
+            this.radius = radius;
+        }
+
+        private boolean visit(BlockPos pos, int step) {
+            if (!level.isInWorldBounds(pos) || !level.hasChunkAt(pos)) return true;
+            VoxelShape shape = level.getBlockState(pos).getCollisionShape(level, pos, CollisionContext.empty());
+            if (shape.isEmpty()) return true;
+            for (AABB box : shape.toAabbs()) {
+                Hit hit = sweep(from, to, box.move(pos.getX(), pos.getY(), pos.getZ()).inflate(radius));
+                if (hit != null && (closest == null || hit.fraction() < closest.fraction())) closest = hit;
+            }
+            return true;
+        }
     }
 
     private static @Nullable Hit sweep(Vec3 start, Vec3 end, AABB box) {
         double enter = -Double.MAX_VALUE;
         double exit = Double.MAX_VALUE;
         int contactAxis = 0;
+        double contactSign = 1.0;
         for (int axis = 0; axis < 3; axis++) {
             double from = axis == 0 ? start.x : axis == 1 ? start.y : start.z;
             double to = axis == 0 ? end.x : axis == 1 ? end.y : end.z;
@@ -92,16 +126,19 @@ public final class ParticleCollision {
             if (near >= enter) {
                 enter = near;
                 contactAxis = axis;
+                contactSign = -Math.signum(direction);
             }
             exit = Math.min(exit, far);
         }
         if (enter < 0.0 || enter > 1.0 || enter > exit) return null;
-        Vec3 normal = contactAxis == 0 ? new Vec3(1.0, 0.0, 0.0)
-                : contactAxis == 1 ? new Vec3(0.0, 1.0, 0.0) : new Vec3(0.0, 0.0, 1.0);
+        Vec3 normal = contactAxis == 0 ? new Vec3(contactSign, 0.0, 0.0)
+                : contactAxis == 1 ? new Vec3(0.0, contactSign, 0.0) : new Vec3(0.0, 0.0, contactSign);
         return new Hit(enter, normal);
     }
 
     private record Hit(double fraction, Vec3 normal) {}
 
-    public record Result(Vec3 position, Vec3 velocity, Vec3 normal, boolean collided) {}
+    public record Contact(Vec3 point, Vec3 normal, Vec3 velocity) {}
+
+    public record Result(Vec3 position, Vec3 velocity, @Nullable Contact contact, boolean grounded) {}
 }

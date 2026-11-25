@@ -9,16 +9,18 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
+import org.joml.Matrix3f;
 import org.joml.Vector3f;
 import com.kltyton.bedrockruntime.client.particle.runtime.ParticleEmitter;
 import com.kltyton.bedrockruntime.client.particle.runtime.ParticlePreset;
 import com.kltyton.bedrockruntime.client.particle.runtime.ParticleFrameMotion;
 import com.kltyton.bedrockruntime.client.particle.runtime.MolangParticleEngine;
 import com.kltyton.bedrockruntime.client.particle.definition.molang.RenderFrameContext;
+import com.kltyton.bedrockruntime.client.particle.definition.event.ParticleEventSource;
 
 import java.util.List;
 
-public interface IMolangParticleInstance extends MolangInstance {
+public interface IMolangParticleInstance extends MolangInstance, ParticleEventSource {
     default Particle self() {
         return (Particle) this;
     }
@@ -162,6 +164,37 @@ public interface IMolangParticleInstance extends MolangInstance {
         ParticleEmitter emitter = getEmitter();
         if (emitter != null) emitter.local2World(dest, partialTick);
         return dest;
+    }
+
+    /** Current physics sample in world coordinates, before appearance interpolation. */
+    default Vec3 getSimulationWorldPosition() {
+        var point = getWorldPosition(new Vector3f(), 1.0F);
+        return new Vec3(point.x, point.y, point.z);
+    }
+
+    @Override
+    default Vec3 eventPosition() {
+        return getSimulationWorldPosition();
+    }
+
+    @Override
+    default Vector3f eventVelocity() {
+        float scale = getVelocityTimeScale();
+        var velocity = new Vector3f((float) (getXd() / scale), (float) (getYd() / scale), (float) (getZd() / scale));
+        var emitter = getEmitter();
+        if (emitter == null) return velocity;
+        velocity.mul(emitter.getParticleRenderTransform(new Matrix3f()));
+        if (!emitter.isParticleSimulationWorldSpace()) velocity.add(emitter.getMovementVelocity());
+        return velocity;
+    }
+
+    /** Current particle displacement from its emitter, in world axes. */
+    default Vector3f getWorldOffsetFromEmitter(Vector3f dest) {
+        getWorldPosition(dest, 1.0F);
+        var emitter = getEmitter();
+        if (emitter == null) return dest;
+        var origin = emitter.getPosition();
+        return dest.set((float) (dest.x - origin.x), (float) (dest.y - origin.y), (float) (dest.z - origin.z));
     }
 
     default Vector3f getInterpolatedWorldPosition(Vector3f dest, float partialTick) {

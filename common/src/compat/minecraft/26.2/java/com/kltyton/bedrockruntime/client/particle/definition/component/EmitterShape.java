@@ -157,11 +157,8 @@ public abstract sealed class EmitterShape implements IEmitterComponent permits E
             emitter.transformParticleBirth(position, speed);
             instance.getInitialSpeed().set(speed);
             float velocityScale = instance.getVelocityTimeScale();
-            if (emitter.isParticleSimulationWorldSpace()) {
-                Vec3 emitterPos = emitter.getPosition();
-                position.add((float) emitterPos.x, (float) emitterPos.y, (float) emitterPos.z);
-            }
-            Vec3 storedPosition = emitter.fromParticleSimulationSpace(position);
+            Vec3 storedPosition = emitter.isParticleSimulationWorldSpace()
+                    ? emitter.getPosition().add(position.x, position.y, position.z) : emitter.fromParticleSimulationSpace(position);
             instance.setPos(storedPosition.x, storedPosition.y, storedPosition.z);
             instance.setPosO(storedPosition.x, storedPosition.y, storedPosition.z);
             instance.setParticleSpeed((double) speed.x * velocityScale,

@@ -7,8 +7,7 @@ import com.kltyton.bedrockruntime.client.particle.api.IMolangParticleInstance;
 import com.kltyton.bedrockruntime.client.particle.api.IParticleComponent;
 import com.kltyton.bedrockruntime.client.particle.definition.molang.FloatMolangExp;
 import com.kltyton.bedrockruntime.client.particle.definition.molang.MolangExp;
-import com.kltyton.bedrockruntime.client.particle.definition.molang.RenderFrameContext;
-import com.kltyton.bedrockruntime.client.particle.runtime.MolangParticleEngine;
+import com.kltyton.bedrockruntime.client.particle.runtime.ParticlePreset;
 
 import java.util.List;
 
@@ -35,6 +34,28 @@ public record ParticleInitialization(FloatMolangExp perRenderExpression, FloatMo
         perUpdateExpression.calculate(instance);
     }
 
+    public static boolean requiresFrameAppearance(ParticlePreset preset) {
+        var effect = preset.effect;
+        if (!effect.orderedCurves.isEmpty()
+                || preset.initialization != null && !preset.initialization.perRenderExpression().getExpStr().isBlank()
+                || preset.cameraDistanceFade) {
+            return true;
+        }
+        for (IParticleComponent component : effect.orderedParticleComponents) {
+            if (component instanceof ParticleAppearanceBillboard billboard
+                    && (billboard.uv().flipbook() != ParticleAppearanceBillboard.UV.Flipbook.EMPTY
+                    || billboard.faceCameraMode().isDirection())) {
+                return true;
+            }
+            if ((component instanceof ParticleAppearanceBillboard || component instanceof ParticleAppearanceTinting
+                    || component instanceof ParticleAppearanceModel)
+                    && component.getAllMolangExp().stream().anyMatch(expression -> !expression.getExpStr().isBlank())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static void render(IMolangParticleInstance instance) {
         instance.getPreset().prepareVariables(instance);
         ParticleInitialization initialization = instance.getPreset().initialization;
@@ -50,10 +71,6 @@ public record ParticleInitialization(FloatMolangExp perRenderExpression, FloatMo
         }
         if (components.get(ParticleAppearanceTinting.ID) instanceof ParticleAppearanceTinting tinting) {
             tinting.apply(instance);
-        }
-        if (components.get(ParticleAppearanceCameraDistanceFade.ID) instanceof ParticleAppearanceCameraDistanceFade
-                || ParticleAppearanceCameraDistanceFade.appliesTo(instance.getIdentity().toString())) {
-            ParticleAppearanceCameraDistanceFade.INSTANCE.apply(instance);
         }
     }
 

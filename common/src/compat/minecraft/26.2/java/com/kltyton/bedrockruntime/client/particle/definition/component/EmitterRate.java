@@ -31,7 +31,7 @@ public abstract sealed class EmitterRate implements IEmitterComponent permits Em
     public static final class Instant extends EmitterRate {
         public static final net.minecraft.resources.Identifier ID = net.minecraft.resources.Identifier.withDefaultNamespace("emitter_rate_instant");
         public static final Codec<Instant> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                BedrockParticles.lenientOptionalFieldOf(FloatMolangExp.CODEC, "num_particles", () -> FloatMolangExp.ZERO).forGetter(Instant::getNumParticles)
+                BedrockParticles.lenientOptionalFieldOf(FloatMolangExp.CODEC, "num_particles", () -> FloatMolangExp.ofConstant(10)).forGetter(Instant::getNumParticles)
         ).apply(instance, Instant::new));
         private final FloatMolangExp numParticles;
 
@@ -89,8 +89,8 @@ public abstract sealed class EmitterRate implements IEmitterComponent permits Em
     public static final class Steady extends EmitterRate {
         public static final net.minecraft.resources.Identifier ID = net.minecraft.resources.Identifier.withDefaultNamespace("emitter_rate_steady");
         public static final Codec<Steady> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                FloatMolangExp.CODEC.lenientOptionalFieldOf("spawn_rate", FloatMolangExp.ZERO).forGetter(Steady::getSpawnRate),
-                BedrockParticles.lenientOptionalFieldOf(FloatMolangExp.CODEC, "max_particles", () -> FloatMolangExp.ZERO).forGetter(Steady::getMaxParticles)
+                FloatMolangExp.CODEC.lenientOptionalFieldOf("spawn_rate", FloatMolangExp.ONE).forGetter(Steady::getSpawnRate),
+                BedrockParticles.lenientOptionalFieldOf(FloatMolangExp.CODEC, "max_particles", () -> FloatMolangExp.ofConstant(50)).forGetter(Steady::getMaxParticles)
         ).apply(instance, Steady::new));
         private final FloatMolangExp spawnRate;
         private final FloatMolangExp maxParticles;
@@ -122,6 +122,7 @@ public abstract sealed class EmitterRate implements IEmitterComponent permits Em
         public void apply(ParticleEmitter emitter) {
             emitter.spawned = false;
             emitter.steadyRate = this;
+            emitter.steadyRateInitialized = false;
             emitter.spawnRate = 0;
             emitter.spawnChance = 0.0F;
             if (emitter.particleGroup == null) emitter.particleGroup = new MutableParticleGroup(0);
@@ -130,12 +131,13 @@ public abstract sealed class EmitterRate implements IEmitterComponent permits Em
 
         @Override
         public void update(ParticleEmitter emitter) {
-            if (emitter.particleGroup == null || emitter.particleGroup.getLimit() == 0) {
+            if (!emitter.steadyRateInitialized) {
                 float value = maxParticles.calculate(emitter);
                 int limit = clampCount(value, 1000);
                 if (emitter.particleGroup == null) emitter.particleGroup = new MutableParticleGroup(limit);
                 else emitter.particleGroup.setLimit(limit);
                 sampleSpawnRate(emitter);
+                emitter.steadyRateInitialized = true;
             }
             float accumulated = emitter.steadyEmissionAccumulator + emitter.invTickRate;
             float interval = 1.0F / emitter.steadyRatePerSecond;
@@ -172,7 +174,7 @@ public abstract sealed class EmitterRate implements IEmitterComponent permits Em
     public static final class Manual extends EmitterRate {
         public static final net.minecraft.resources.Identifier ID = net.minecraft.resources.Identifier.withDefaultNamespace("emitter_rate_manual");
         public static final Codec<Manual> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                BedrockParticles.lenientOptionalFieldOf(FloatMolangExp.CODEC, "max_particles", () -> FloatMolangExp.ZERO).forGetter(Manual::getMaxParticles)
+                BedrockParticles.lenientOptionalFieldOf(FloatMolangExp.CODEC, "max_particles", () -> FloatMolangExp.ofConstant(50)).forGetter(Manual::getMaxParticles)
         ).apply(instance, Manual::new));
         private final FloatMolangExp maxParticles;
 

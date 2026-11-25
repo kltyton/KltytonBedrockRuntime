@@ -8,6 +8,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import org.joml.Quaternionf;
 import org.joml.Vector3d;
 import org.joml.Vector3f;
 
@@ -91,6 +92,104 @@ public final class BedrockMeshParser {
             throw fail(resource, bone, "poly_mesh produced no triangles");
         }
         return mesh;
+    }
+
+    public static TriangleMesh parseTextureMeshes(String resource, String bone, JsonArray textureMeshes,
+                                                  float textureWidth, float textureHeight) {
+        String safeResource = Objects.toString(resource, "");
+        String safeBone = Objects.toString(bone, "");
+        try {
+            return parseTextureMeshesInternal(safeResource, safeBone, textureMeshes, textureWidth, textureHeight);
+        } catch (MeshParseException exception) {
+            throw exception;
+        } catch (RuntimeException exception) {
+            throw new MeshParseException(safeResource, safeBone,
+                    exception.getMessage() == null ? exception.getClass().getSimpleName() : exception.getMessage(),
+                    exception);
+        }
+    }
+
+    private static TriangleMesh parseTextureMeshesInternal(String resource, String bone, JsonArray textureMeshes,
+                                                           float textureWidth, float textureHeight) {
+        if (textureMeshes == null || textureMeshes.isEmpty()) {
+            throw fail(resource, bone, "texture_meshes array is empty");
+        }
+        if (!Float.isFinite(textureWidth) || !Float.isFinite(textureHeight)
+                || textureWidth <= 0.0F || textureHeight <= 0.0F) {
+            throw fail(resource, bone, "texture width and height must be positive and finite for texture_meshes");
+        }
+        TriangleMeshBuilder builder = new TriangleMeshBuilder();
+        double[][] corners = {
+                { 0.0, 0.5, 0.0, 0.0, 0.0 },
+                { textureWidth, 0.5, 0.0, 1.0, 0.0 },
+                { textureWidth, 0.5, textureHeight, 1.0, 1.0 },
+                { 0.0, 0.5, textureHeight, 0.0, 1.0 }
+        };
+        for (int index = 0; index < textureMeshes.size(); index++) {
+            JsonElement element = textureMeshes.get(index);
+            if (element == null || !element.isJsonObject()) {
+                throw fail(resource, bone, "texture_meshes[" + index + "] must be an object");
+            }
+            JsonObject entry = element.getAsJsonObject();
+            double[] position = optionalVec3(resource, bone, entry.get("position"), "texture_meshes[" + index + "].position", 0.0);
+            double[] localPivot = optionalVec3(resource, bone, entry.get("local_pivot"), "texture_meshes[" + index + "].local_pivot", 0.0);
+            double[] rotation = optionalVec3(resource, bone, entry.get("rotation"), "texture_meshes[" + index + "].rotation", 0.0);
+            double[] scale = optionalVec3(resource, bone, entry.get("scale"), "texture_meshes[" + index + "].scale", 1.0);
+            Quaternionf quat = new Quaternionf().rotateZYX(
+                    (float) Math.toRadians(rotation[2]),
+                    (float) Math.toRadians(-rotation[1]),
+                    (float) Math.toRadians(-rotation[0]));
+            Vector3f frontNormal = quat.transform(new Vector3f(0.0F, 1.0F, 0.0F));
+            if (frontNormal.lengthSquared() > NORMAL_EPSILON_SQUARED) {
+                frontNormal.normalize();
+            } else {
+                frontNormal.set(0.0F, 1.0F, 0.0F);
+            }
+            int frontNormalIndex = builder.addNormal(frontNormal.x, frontNormal.y, frontNormal.z);
+            int backNormalIndex = builder.addNormal(-frontNormal.x, -frontNormal.y, -frontNormal.z);
+            int[] posIndices = new int[4];
+            int[] uvIndices = new int[4];
+            for (int c = 0; c < 4; c++) {
+                float vx = finiteFloat(resource, bone, -(corners[c][0] - localPivot[0]) * POSITION_SCALE * scale[0], "texture_mesh x");
+                float vy = finiteFloat(resource, bone, (corners[c][1] - localPivot[1]) * POSITION_SCALE * scale[1], "texture_mesh y");
+                float vz = finiteFloat(resource, bone, (corners[c][2] - localPivot[2]) * POSITION_SCALE * scale[2], "texture_mesh z");
+                Vector3f vertex = quat.transform(new Vector3f(vx, vy, vz));
+                vertex.add(
+                        finiteFloat(resource, bone, -position[0] * POSITION_SCALE, "texture_mesh pos x"),
+                        finiteFloat(resource, bone, position[1] * POSITION_SCALE, "texture_mesh pos y"),
+                        finiteFloat(resource, bone, position[2] * POSITION_SCALE, "texture_mesh pos z"));
+                posIndices[c] = builder.addPosition(vertex.x, vertex.y, vertex.z);
+                uvIndices[c] = builder.addUv((float) corners[c][3], (float) corners[c][4]);
+            }
+            builder.addQuad(
+                    posIndices[0], posIndices[1], posIndices[2], posIndices[3],
+                    frontNormalIndex, frontNormalIndex, frontNormalIndex, frontNormalIndex,
+                    uvIndices[0], uvIndices[1], uvIndices[2], uvIndices[3]);
+            builder.addQuad(
+                    posIndices[0], posIndices[3], posIndices[2], posIndices[1],
+                    backNormalIndex, backNormalIndex, backNormalIndex, backNormalIndex,
+                    uvIndices[0], uvIndices[3], uvIndices[2], uvIndices[1]);
+        }
+        TriangleMesh mesh = builder.build();
+        if (mesh.triangleCount() == 0) {
+            throw fail(resource, bone, "texture_meshes produced no triangles");
+        }
+        return mesh;
+    }
+
+    private static double[] optionalVec3(String resource, String bone, JsonElement element, String label, double fallback) {
+        if (element == null || element.isJsonNull()) {
+            return new double[]{ fallback, fallback, fallback };
+        }
+        JsonArray array = arrayAt(resource, bone, element, label);
+        if (array.size() < 3) {
+            throw fail(resource, bone, label + " must contain 3 numbers");
+        }
+        return new double[]{
+                number(resource, bone, array.get(0), label + "[0]"),
+                number(resource, bone, array.get(1), label + "[1]"),
+                number(resource, bone, array.get(2), label + "[2]")
+        };
     }
 
     private static List<Vector3f> parsePositions(String resource, String bone, JsonElement element) {

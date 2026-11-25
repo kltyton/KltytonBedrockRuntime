@@ -82,6 +82,7 @@ public final class ParticleRegistry {
         IEventNode.register("sequence", EventSequence.CODEC);
         IEventNode.register("weight", EventRandomize.WEIGHT_CODEC);
         IEventNode.register("randomize", EventRandomize.CODEC);
+        IEventNode.register("random", EventRandomize.CODEC);
         IEventNode.register("particle_effect", ParticleEffect.CODEC);
         IEventNode.register("sound_effect", SoundEffect.CODEC);
         IEventNode.register("expression", NodeMolangExp.CODEC);

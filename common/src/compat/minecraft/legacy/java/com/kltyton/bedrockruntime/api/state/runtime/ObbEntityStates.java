@@ -3,6 +3,7 @@ package com.kltyton.bedrockruntime.api.state.runtime;
 
 import com.kltyton.bedrockruntime.api.entity.BoneHitboxEntity;
 import com.kltyton.bedrockruntime.api.registration.registrar.ObbBoneRegistrar;
+import com.kltyton.bedrockruntime.server.state.player.PlayerObbSavedData;
 
 import net.minecraft.world.entity.Entity;
 import net.minecraft.nbt.CompoundTag;
@@ -44,6 +45,9 @@ public final class ObbEntityStates {
 
     public static void save(Entity entity, CompoundTag output) {
         if (!(entity instanceof BoneHitboxEntity)) {
+            if (entity instanceof PlayerObbSavedData player && player.kbr$inactivePlayerObb() != null) {
+                output.put(SAVE_KEY, player.kbr$inactivePlayerObb().copy());
+            }
             return;
         }
         CompoundTag state = new CompoundTag();
@@ -53,6 +57,9 @@ public final class ObbEntityStates {
 
     public static void load(Entity entity, CompoundTag input) {
         if (!(entity instanceof BoneHitboxEntity)) {
+            if (entity instanceof PlayerObbSavedData player) {
+                player.kbr$inactivePlayerObb(input.contains(SAVE_KEY, Tag.TAG_COMPOUND) ? input.getCompound(SAVE_KEY).copy() : null);
+            }
             return;
         }
         if (input.contains(SAVE_KEY, Tag.TAG_COMPOUND)) { get(entity).load(input.getCompound(SAVE_KEY)); }

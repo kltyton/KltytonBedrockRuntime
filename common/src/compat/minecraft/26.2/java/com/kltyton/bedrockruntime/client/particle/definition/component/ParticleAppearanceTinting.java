@@ -148,7 +148,7 @@ public record ParticleAppearanceTinting(Color color, ColorField colorField) impl
                     float v1 = Integer.parseInt(hex.substring(2, 4), 16) / 255.0F;
                     float v2 = Integer.parseInt(hex.substring(4, 6), 16) / 255.0F;
                     if (hex.length() == 6) {
-                        a = 0.0F;
+                        a = 1.0F;
                         r = v0;
                         g = v1;
                         b = v2;

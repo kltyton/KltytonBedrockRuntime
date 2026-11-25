@@ -70,7 +70,7 @@ public final class MolangEntityStateTracker {
         Tracked tracked = TRACKED.computeIfAbsent(living,
                 ignored -> new Tracked(current, recoveryTarget, living.tickCount));
         tracked.players.add(player);
-        currentSink.sendToPlayer(player, snapshot(living, true));
+        currentSink.sendToPlayer(player, snapshot(living, current, recoveryTarget, true));
     }
 
     public static void onStopTracking(ServerPlayer player, Entity target) {
@@ -136,12 +136,13 @@ public final class MolangEntityStateTracker {
             if (!changed) {
                 continue;
             }
-            currentSink.sendToTracking(level, entity, snapshot(entity, false), tracked.players);
+            currentSink.sendToTracking(level, entity, snapshot(entity, current, recoveryTarget, false), tracked.players);
         }
     }
 
     public static MolangEntityStateSnapshot snapshot(LivingEntity entity) {
-        return snapshot(entity, true);
+        long state = state(entity);
+        return snapshot(entity, state, recoveryTarget(entity, state), true);
     }
 
     public static boolean isTracking(LivingEntity entity, ServerPlayer player) {
@@ -153,11 +154,11 @@ public final class MolangEntityStateTracker {
                 && currentSink.isTracking(level, entity, player);
     }
 
-    private static MolangEntityStateSnapshot snapshot(LivingEntity entity, boolean initial) {
-        long state = state(entity);
+    private static MolangEntityStateSnapshot snapshot(LivingEntity entity, long state, Optional<GlobalPos> recoveryTarget,
+                                                       boolean initial) {
         int packetFlags = initial ? flags(state) | MolangEntityStateFlags.INITIAL : flags(state);
         return new MolangEntityStateSnapshot(entity.getId(), entity.getUUID(), packetFlags,
-                remaining(state), recoveryTarget(entity, state));
+                remaining(state), recoveryTarget);
     }
 
     private static long state(LivingEntity entity) {

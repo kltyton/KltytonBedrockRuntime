@@ -60,8 +60,14 @@ public final class BedrockParticleResources {
         IoSupplier<InputStream> manifest = resource.source().getRootResource("manifest.json");
         if (manifest == null) return MolangVersion.LATEST;
         try (InputStream input = manifest.get(); InputStreamReader reader = new InputStreamReader(input, StandardCharsets.UTF_8)) {
-            JsonObject header = object(BedrockJson.parse(reader), "header");
+            JsonObject document = BedrockJson.parse(reader);
+            JsonObject header = object(document, "header");
             if (header == null || !header.has("min_engine_version")) {
+                if (header != null && document.has("format_version") && document.get("format_version").isJsonPrimitive()
+                        && document.get("format_version").getAsJsonPrimitive().isNumber()
+                        && document.get("format_version").getAsInt() == 1) {
+                    return new MolangVersion(1, 0, 0);
+                }
                 if (resource.source() instanceof BedrockPackResources)
                     throw new IllegalArgumentException("Resource pack manifest lacks header.min_engine_version");
                 return MolangVersion.LATEST;

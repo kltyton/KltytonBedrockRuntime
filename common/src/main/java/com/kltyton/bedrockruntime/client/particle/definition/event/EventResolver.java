@@ -114,6 +114,7 @@ public final class EventResolver {
     }
 
     private static Vec3 capturePosition(MolangInstance instance) {
+        if (instance instanceof ParticleEventSource source) return source.eventPosition();
         if (!(instance instanceof IMolangParticleInstance particle)) return instance.getPosition();
         ParticleEmitter emitter = particle.getEmitter();
         boolean actor = emitter.getAttachedEntity() != null;
@@ -129,6 +130,7 @@ public final class EventResolver {
     }
 
     public static Vector3f captureVelocity(MolangInstance instance) {
+        if (instance instanceof ParticleEventSource source) return source.eventVelocity();
         ParticleEmitter emitter = instance.getEmitter();
         if (instance instanceof IMolangParticleInstance particle) {
             boolean actor = emitter.getAttachedEntity() != null;
@@ -152,16 +154,20 @@ public final class EventResolver {
     public static void execute(Map<String, IEventNode> nodes, MolangInstance instance) {
         IEventNode randomize = nodes.get("randomize");
         Map<String, IEventNode> selected = randomize instanceof EventRandomize weighted ? weighted.select(instance) : null;
+        IEventNode legacyRandomize = nodes.get("random");
+        Map<String, IEventNode> legacySelected = legacyRandomize instanceof EventRandomize weighted ? weighted.select(instance) : null;
         executeNode(nodes.get("sequence"), instance);
         if (selected != null) execute(selected, instance);
         else executeNode(randomize, instance);
+        if (legacySelected != null) execute(legacySelected, instance);
+        else executeNode(legacyRandomize, instance);
         executeNode(nodes.get("particle_effect"), instance);
         executeNode(nodes.get("sound_effect"), instance);
         executeNode(nodes.get("expression"), instance);
         executeNode(nodes.get("log"), instance);
         for (Map.Entry<String, IEventNode> entry : nodes.entrySet()) {
             switch (entry.getKey()) {
-                case "sequence", "randomize", "particle_effect", "sound_effect", "expression", "log", "weight" -> {}
+                case "sequence", "randomize", "random", "particle_effect", "sound_effect", "expression", "log", "weight" -> {}
                 default -> entry.getValue().execute(instance);
             }
         }

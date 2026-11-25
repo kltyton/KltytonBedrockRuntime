@@ -6,7 +6,10 @@ import com.kltyton.bedrockruntime.client.particle.definition.Tuple;
 import com.kltyton.bedrockruntime.client.particle.api.IEventNode;
 import com.kltyton.bedrockruntime.client.particle.api.MolangInstance;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public final class EventRandomize implements IEventNode {
     public static final Codec<IEventNode> WEIGHT_CODEC = Codec.FLOAT.orElse(Float.NaN)
@@ -17,12 +20,12 @@ public final class EventRandomize implements IEventNode {
     public final List<Map<String, IEventNode>> nodes;
 
     public final List<Tuple<Float, Map<String, IEventNode>>> sortedNodes;
-    private final float totalWeight;
+    private final double totalWeight;
 
     public EventRandomize(List<Map<String, IEventNode>> nodes) {
         this.sortedNodes = new ArrayList<>();
         List<Map<String, IEventNode>> accepted = new ArrayList<>();
-        float total = 0.0F;
+        double total = 0.0;
         for (int i = 0; i < nodes.size(); i++) {
             Map<String, IEventNode> node = new LinkedHashMap<>(nodes.get(i));
             IEventNode weightNode = node.remove("weight");
@@ -31,7 +34,7 @@ public final class EventRandomize implements IEventNode {
                 continue;
             }
             float weight = weightValue(weightNode);
-            if (!(weight >= 0.0F)) {
+            if (!Float.isFinite(weight) || weight < 0.0F) {
                 BedrockParticles.LOGGER.warn("Skipping randomize[{}]: weight must be a non-negative number", i);
                 continue;
             }
@@ -49,13 +52,17 @@ public final class EventRandomize implements IEventNode {
     }
 
     public Map<String, IEventNode> select(MolangInstance instance) {
-        if (sortedNodes.isEmpty()) return Map.of();
-        float choice = instance.getLevel().getRandom().nextFloat() * totalWeight;
+        if (totalWeight == 0.0) return Map.of();
+        double choice = instance.getLevel().getRandom().nextFloat() * totalWeight;
+        Map<String, IEventNode> lastPositive = Map.of();
         for (Tuple<Float, Map<String, IEventNode>> tuple : sortedNodes) {
-            if (choice <= tuple.getA()) return tuple.getB();
-            choice -= tuple.getA();
+            float weight = tuple.getA();
+            if (weight == 0.0F) continue;
+            if (choice < weight) return tuple.getB();
+            choice -= weight;
+            lastPositive = tuple.getB();
         }
-        return sortedNodes.get(sortedNodes.size() - 1).getB();
+        return lastPositive;
     }
 
     @Override

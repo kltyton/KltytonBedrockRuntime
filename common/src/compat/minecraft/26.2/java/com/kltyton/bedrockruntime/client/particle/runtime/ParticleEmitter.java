@@ -41,6 +41,7 @@ import com.kltyton.bedrockruntime.client.particle.definition.molang.compiler.Mol
 import com.kltyton.bedrockruntime.client.particle.definition.molang.compiler.value.Variable;
 import com.kltyton.bedrockruntime.client.particle.runtime.attachment.EmitterAttachHandler;
 import com.kltyton.bedrockruntime.client.particle.runtime.attachment.IgnoreRangeParticleEmitter;
+import com.kltyton.bedrockruntime.client.particle.runtime.physics.ParticleSimulationFrame;
 import com.kltyton.bedrockruntime.client.particle.access.IBlockEntity;
 import com.kltyton.bedrockruntime.client.particle.access.IEntity;
 
@@ -131,6 +132,7 @@ public class ParticleEmitter implements MolangInstance {
     public transient MutableParticleGroup particleGroup;
     public transient @Nullable EmitterRate.Manual manualRate;
     public transient @Nullable EmitterRate.Steady steadyRate;
+    public transient boolean steadyRateInitialized;
     public transient float steadyRatePerSecond;
     public transient float steadyEmissionAccumulator;
     public transient int activeParticleCount = 0;
@@ -523,6 +525,7 @@ public class ParticleEmitter implements MolangInstance {
         if (attached != null) attach(attached);
         else if (itemVariables != null) updateAttachmentScope();
         if (restoredRandoms) publishRandomVariables();
+        else updateRandoms(level.getRandom());
         if (!deferredEffectInitialization) initVars();
         createComponents();
     }
@@ -644,12 +647,15 @@ public class ParticleEmitter implements MolangInstance {
         for (IEmitterComponent component : preset.components) {
             if (component instanceof EmitterLifetime || component instanceof EmitterRate) component.apply(this);
         }
-        if (!restoredRandoms) updateRandoms(level.getRandom());
         restoredRandoms = false;
         for (IEmitterComponent component : preset.components) {
             if (!(component instanceof EmitterLifetime) && !(component instanceof EmitterRate)) component.apply(this);
         }
         this.components = preset.components.stream().filter(IEmitterComponent::requireUpdate).toList();
+        if (components.stream().anyMatch(component -> !(component instanceof EmitterRate.Instant)
+                && (!(component instanceof EmitterInitialization init) || !init.perUpdateExpression().getExpStr().isBlank()))) {
+            requireFrameSimulation();
+        }
         PSDiagnostics.infoFirstN("emitter-components:" + particleId, 32, "emitter ready runtimeId={} particle={} active={} lifetime={} rateType={} spawnRate={} particleGroup={} localPosition={} localRotation={} localVelocity={} updateComponents={}",
                 id,
                 particleId,
@@ -733,6 +739,7 @@ public class ParticleEmitter implements MolangInstance {
             if (component instanceof EmitterInitialization) component.update(this);
         }
         if (!expired && hasExceededLoopTime()) {
+            updateRandoms(level.getRandom());
             for (IEmitterComponent component : preset.components) {
                 if (component instanceof EmitterLifetime) component.apply(this);
             }
@@ -741,7 +748,6 @@ public class ParticleEmitter implements MolangInstance {
                 if (!(component instanceof EmitterInitialization) && !(component instanceof EmitterLifetimeEvents)
                         && !(component instanceof EmitterLifetime)) component.apply(this);
             }
-            updateRandoms(level.getRandom());
             resetLoopTime();
             lastTimeline = 0;
         }
@@ -980,32 +986,57 @@ public class ParticleEmitter implements MolangInstance {
     }
 
     public void simulationToWorld(Vector3f vec, float partialTick) {
-        vec.mul(effectFrame);
         Entity entity = getAttachedEntity();
+        orientParticleOffset(vec, entity);
+        var origin = particleWorldTranslation(entity, partialTick);
+        vec.add((float) origin.x, (float) origin.y, (float) origin.z);
+    }
+
+    ParticleSimulationFrame simulationFrame(float partialTick) {
+        return new ParticleSimulationFrame(
+                getParticleRenderTransform(new org.joml.Matrix3f()), particleWorldTranslation(getAttachedEntity(), partialTick));
+    }
+
+    Vec3 simulationWorldPoint(double x, double y, double z, Vector3f scratch) {
+        var entity = getAttachedEntity();
+        var origin = particleWorldTranslation(entity, 1.0F);
+        if (isParticleSimulationWorldSpace()) {
+            return new Vec3(effectFrame.m00() * x + effectFrame.m10() * y + effectFrame.m20() * z + origin.x,
+                    effectFrame.m01() * x + effectFrame.m11() * y + effectFrame.m21() * z + origin.y,
+                    effectFrame.m02() * x + effectFrame.m12() * y + effectFrame.m22() * z + origin.z);
+        }
+        orientParticleOffset(scratch.set((float) x, (float) y, (float) z), entity);
+        return origin.add(scratch.x, scratch.y, scratch.z);
+    }
+
+    private Vec3 particleWorldTranslation(@Nullable Entity entity, float partialTick) {
+        if (entity != null) {
+            return hasLocalParticlePosition() ? entityFramePosition(entity) : offsetPos;
+        }
+        if (hasLocalParticlePosition()) return partialTick == 1.0f ? pos : posO.lerp(pos, partialTick);
+        return isParticleSimulationWorldSpace() ? Vec3.ZERO : pos;
+    }
+
+    Vector3f orientParticleOffset(Vector3f offset, @Nullable Entity entity) {
+        offset.mul(effectFrame);
         if (entity != null) {
             if (hasLocalParticlePosition()) {
-                if (isLocalSpace()) vec.mulDirection(parentSpace);
-                else vec.rotateY(particleBodyRotation(preset.localRotation));
-                Vec3 origin = entityFramePosition(entity);
-                vec.add((float) origin.x, (float) origin.y, (float) origin.z);
-            } else {
-                vec.add((float) offsetPos.x, (float) offsetPos.y, (float) offsetPos.z);
+                if (isLocalSpace()) offset.mulDirection(parentSpace);
+                else offset.rotateY(particleBodyRotation(preset.localRotation));
             }
-        } else {
-            boolean worldSpace = isParticleSimulationWorldSpace();
-            if (isLocalSpace() && preset.localRotation && !worldSpace) vec.mulDirection(parentSpace);
-            else if (itemOwner != null && !isLocalSpace() && preset.localRotation && hasLocalParticlePosition()) {
-                vec.rotateY(particleBodyRotation(true));
-            }
-            if (hasLocalParticlePosition()) {
-                vec.add(
-                        (float) Mth.lerp((double) partialTick, posO.x, pos.x),
-                        (float) Mth.lerp((double) partialTick, posO.y, pos.y),
-                        (float) Mth.lerp((double) partialTick, posO.z, pos.z));
-            } else if (!worldSpace) {
-                vec.add((float) pos.x, (float) pos.y, (float) pos.z);
-            }
+        } else if (isLocalSpace() && preset.localRotation && !isParticleSimulationWorldSpace()) {
+            offset.mulDirection(parentSpace);
+        } else if (itemOwner != null && !isLocalSpace() && preset.localRotation && hasLocalParticlePosition()) {
+            offset.rotateY(particleBodyRotation(true));
         }
+        return offset;
+    }
+
+    Vector3f worldParticleOffset(double x, double y, double z, Vector3f dest) {
+        // Absolute particle coordinates stay in double precision until the emitter origin has been subtracted.
+        var point = simulationWorldPoint(x, y, z, dest);
+        var origin = getPosition();
+        return dest.set((float) (point.x - origin.x), (float) (point.y - origin.y), (float) (point.z - origin.z));
     }
 
     public boolean isLocalSpace() {
@@ -1469,6 +1500,10 @@ public class ParticleEmitter implements MolangInstance {
     public long getElapsedTimeNanos() { return simulationTime.elapsedNanos(); }
 
     public long getUpdateDeltaNanos() { return simulationTime.updateDeltaNanos(); }
+
+    void requireFrameSimulation() {
+        simulationTime.requireFrameSteps();
+    }
 
     void advanceRetainedParticleFrame(long deltaNanos) {
         if (simulationTime.beginFrame(deltaNanos, false)) {

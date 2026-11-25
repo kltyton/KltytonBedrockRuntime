@@ -5,17 +5,18 @@ import com.kltyton.bedrockruntime.client.particle.definition.molang.RenderFrameC
 
 /** Keeps frame scheduling and nanosecond emitter times alongside public tick counters. */
 public final class EmitterSimulationTime {
-    private static final int FRAMES_PER_UPDATE = 2;
+    private static final int CACHED_FRAME_INTERVAL = 2;
     private final ParticleEmitter emitter;
+    private int simulationInterval = CACHED_FRAME_INTERVAL;
     private int simulationFrame;
-    private int lastSimulationFrame = ~FRAMES_PER_UPDATE;
+    private int lastSimulationFrame = ~CACHED_FRAME_INTERVAL;
     private long pendingFrameNanos;
     private long updateDeltaNanos;
     private long simulationSequence;
     private long updatedFrameIndex = Long.MIN_VALUE;
     private long inputFrameIndex = Long.MIN_VALUE;
     private int renderFrame;
-    private int lastAppearanceFrame = ~FRAMES_PER_UPDATE;
+    private int lastAppearanceFrame = ~CACHED_FRAME_INTERVAL;
     private long renderInputFrameIndex = Long.MIN_VALUE;
     private boolean appearanceUpdate;
     private boolean shortRenderLifetime;
@@ -46,7 +47,7 @@ public final class EmitterSimulationTime {
         updateDeltaNanos = 0L;
         pendingFrameNanos += deltaNanos;
         int frame = ++simulationFrame;
-        if (frame - lastSimulationFrame < FRAMES_PER_UPDATE) return false;
+        if (frame - lastSimulationFrame < simulationInterval) return false;
         lastSimulationFrame = frame;
         updateDeltaNanos = pendingFrameNanos;
         pendingFrameNanos = 0L;
@@ -69,7 +70,11 @@ public final class EmitterSimulationTime {
     }
 
     public float motionInterpolation() {
-        return (float) (simulationFrame - lastSimulationFrame) / FRAMES_PER_UPDATE;
+        return simulationInterval == 1 ? 1.0F : (float) (simulationFrame - lastSimulationFrame) / simulationInterval;
+    }
+
+    public void requireFrameSteps() {
+        simulationInterval = 1;
     }
 
     public void beginRenderFrame() {
@@ -77,7 +82,7 @@ public final class EmitterSimulationTime {
         if (renderInputFrameIndex == frame) return;
         renderInputFrameIndex = frame;
         int current = ++renderFrame;
-        appearanceUpdate = current - lastAppearanceFrame >= FRAMES_PER_UPDATE;
+        appearanceUpdate = current - lastAppearanceFrame >= CACHED_FRAME_INTERVAL;
         if (appearanceUpdate) lastAppearanceFrame = current;
         shortRenderLifetime = false;
     }
@@ -87,7 +92,7 @@ public final class EmitterSimulationTime {
     }
 
     private boolean needsRenderWarmup() {
-        return lastAppearanceFrame < 2 || lastSimulationFrame < 2;
+        return lastAppearanceFrame < CACHED_FRAME_INTERVAL || lastSimulationFrame < simulationInterval;
     }
 
     public void noteRenderLifetime(long lifetime) {
@@ -103,7 +108,7 @@ public final class EmitterSimulationTime {
     }
 
     public float appearanceInterpolation() {
-        return (float) (renderFrame - lastAppearanceFrame) / FRAMES_PER_UPDATE;
+        return (float) (renderFrame - lastAppearanceFrame) / CACHED_FRAME_INTERVAL;
     }
 
     public void beginStep(long deltaNanos) {

@@ -81,7 +81,7 @@ public abstract sealed class EmitterLifetime implements IEmitterComponent permit
     public static final class Looping extends EmitterLifetime {
         public static final net.minecraft.resources.Identifier ID = net.minecraft.resources.Identifier.withDefaultNamespace("emitter_lifetime_looping");
         public static final Codec<Looping> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                BedrockParticles.lenientOptionalFieldOf(FloatMolangExp.CODEC, "active_time", () -> FloatMolangExp.ZERO).forGetter(Looping::getActiveTime),
+                BedrockParticles.lenientOptionalFieldOf(FloatMolangExp.CODEC, "active_time", () -> FloatMolangExp.ofConstant(10)).forGetter(Looping::getActiveTime),
                 FloatMolangExp.CODEC.lenientOptionalFieldOf("sleep_time", FloatMolangExp.ZERO).forGetter(Looping::getSleepTime)
         ).apply(instance, Looping::new));
         private final FloatMolangExp activeTime;
@@ -146,7 +146,7 @@ public abstract sealed class EmitterLifetime implements IEmitterComponent permit
     public static final class Once extends EmitterLifetime {
         public static final net.minecraft.resources.Identifier ID = net.minecraft.resources.Identifier.withDefaultNamespace("emitter_lifetime_once");
         public static final Codec<Once> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                BedrockParticles.lenientOptionalFieldOf(FloatMolangExp.CODEC, "active_time", () -> FloatMolangExp.ZERO).forGetter(Once::getActiveTime)
+                BedrockParticles.lenientOptionalFieldOf(FloatMolangExp.CODEC, "active_time", () -> FloatMolangExp.ofConstant(10)).forGetter(Once::getActiveTime)
         ).apply(instance, Once::new));
         private final FloatMolangExp activeTime;
 

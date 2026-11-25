@@ -622,7 +622,9 @@ public class MolangParticleManager {
     public @Nullable Camera previewCamera() { return previewCamera; }
 
     public void kltyton_bedrock_runtime$particleAdded(Identifier effect, IMolangParticleInstance particle) {
-        particlesForEmitter.computeIfAbsent(particle.getEmitter().id, ignored -> new ArrayDeque<>()).add(particle);
+        ParticleEmitter emitter = particle.getEmitter();
+        particlesForEmitter.computeIfAbsent(emitter.id, ignored -> new ArrayDeque<>()).add(particle);
+        if (particle.getPreset().frameSimulation) emitter.requireFrameSimulation();
         perFrameExpressions.add(particle);
         particlesByEffect.addTo(effect, 1);
         admittedParticleCount++;

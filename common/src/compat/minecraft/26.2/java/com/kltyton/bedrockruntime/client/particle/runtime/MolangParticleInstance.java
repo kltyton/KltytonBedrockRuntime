@@ -38,6 +38,7 @@ import com.kltyton.bedrockruntime.client.particle.definition.component.ParticleL
 import com.kltyton.bedrockruntime.client.particle.definition.component.ParticleLifetimeKillPlane;
 import com.kltyton.bedrockruntime.client.particle.definition.component.ParticleExpireIfInBlocks;
 import com.kltyton.bedrockruntime.client.particle.definition.component.ParticleExpireIfNotInBlocks;
+import com.kltyton.bedrockruntime.client.particle.definition.component.ParticleInitialization;
 import com.kltyton.bedrockruntime.client.particle.runtime.physics.ParticleCollision;
 import com.kltyton.bedrockruntime.client.particle.definition.event.EventResolver;
 import com.kltyton.bedrockruntime.client.particle.definition.description.DescriptionMaterial;
@@ -59,8 +60,10 @@ public class MolangParticleInstance extends SingleQuadParticle implements IMolan
     private boolean tickLifetime;
     private boolean evaluatingUpdate;
     private boolean previousMotionSample;
+    private @Nullable Vec3 collisionWorldSample;
     private long lastSimulationSequence;
     private boolean appearancePrepared;
+    private long appearanceFrame = Long.MIN_VALUE;
     private final org.joml.Matrix3f renderBasis = new org.joml.Matrix3f();
     private final Vector3f renderBasisScratch = new Vector3f();
     private boolean renderBasisActive;
@@ -565,6 +568,20 @@ public class MolangParticleInstance extends SingleQuadParticle implements IMolan
     }
 
     @Override
+    public Vec3 getSimulationWorldPosition() {
+        if (emitter == null) return getPosition();
+        var storage = storesOriginOffset() ? simulationOrigin : Vec3.ZERO;
+        return emitter.simulationWorldPoint(x - storage.x, y - storage.y, z - storage.z, renderBasisScratch);
+    }
+
+    @Override
+    public Vector3f getWorldOffsetFromEmitter(Vector3f dest) {
+        if (emitter == null) return toSimulationSpace(x, y, z, dest);
+        if (emitter.isParticleSimulationWorldSpace()) return emitter.worldParticleOffset(x, y, z, dest);
+        return emitter.orientParticleOffset(toSimulationSpace(x, y, z, dest), emitter.getAttachedEntity());
+    }
+
+    @Override
     public Vector3f getInterpolatedWorldPosition(Vector3f dest, float partialTick) {
         partialTick = previousMotionSample && emitter != null ? emitter.getMotionInterpolation() : 1.0F;
         toSimulationSpace(Mth.lerp((double) partialTick, xo, x),
@@ -637,7 +654,9 @@ public class MolangParticleInstance extends SingleQuadParticle implements IMolan
                 if (!(component instanceof ParticleMotionCollision)) continue;
                 component.update(this);
                 if (hasPhysics && hasCollision) {
-                    resolveMotionCollision(xo, yo, zo, !previousMotionSample);
+                    resolveMotionCollision(xo, yo, zo);
+                } else {
+                    collisionWorldSample = getSimulationWorldPosition();
                 }
                 if (!isAlive()) return;
             }
@@ -748,7 +767,7 @@ public class MolangParticleInstance extends SingleQuadParticle implements IMolan
         }
     }
 
-    void beginAppearanceUpdate() {
+    private void capturePreviousAppearance() {
         previousBillboardSize[0] = billboardSize == null || billboardSize.length < 2 ? super.getQuadSize(1.0F) : billboardSize[0];
         previousBillboardSize[1] = billboardSize == null || billboardSize.length < 2 ? super.getQuadSize(1.0F) : billboardSize[1];
         previousColor[0] = rCol;
@@ -757,11 +776,15 @@ public class MolangParticleInstance extends SingleQuadParticle implements IMolan
         previousColor[3] = alpha;
     }
 
-    void finishAppearanceUpdate() {
-        if (!appearancePrepared) {
-            beginAppearanceUpdate();
+    void prepareAppearance(long frame, boolean snap) {
+        if (appearanceFrame != frame) {
+            if (appearancePrepared && !preset.frameAppearance && !snap) capturePreviousAppearance();
+            ParticleInitialization.render(this);
+            if (!appearancePrepared && !preset.frameAppearance) capturePreviousAppearance();
             appearancePrepared = true;
+            appearanceFrame = frame;
         }
+        if (snap && !preset.frameAppearance) capturePreviousAppearance();
     }
 
     long renderLifetimeNanos() {
@@ -770,7 +793,7 @@ public class MolangParticleInstance extends SingleQuadParticle implements IMolan
 
     private float getRenderColorComponent(int component) {
         float current = component == 0 ? rCol : component == 1 ? gCol : component == 2 ? bCol : alpha;
-        return appearancePrepared && emitter != null
+        return appearancePrepared && emitter != null && !preset.frameAppearance
                 ? Mth.lerp(emitter.getAppearanceInterpolation(), previousColor[component], current) : current;
     }
 
@@ -877,14 +900,14 @@ public class MolangParticleInstance extends SingleQuadParticle implements IMolan
 
     private float getBillboardWidth(float partialTick) {
         if (billboardSize == null || billboardSize.length < 2) return super.getQuadSize(partialTick);
-        float width = appearancePrepared && emitter != null
+        float width = appearancePrepared && emitter != null && !preset.frameAppearance
                 ? Mth.lerp(emitter.getAppearanceInterpolation(), previousBillboardSize[0], billboardSize[0]) : billboardSize[0];
         return Math.max(0.0F, width);
     }
 
     private float getBillboardHeight(float partialTick) {
         if (billboardSize == null || billboardSize.length < 2) return super.getQuadSize(partialTick);
-        float height = appearancePrepared && emitter != null
+        float height = appearancePrepared && emitter != null && !preset.frameAppearance
                 ? Mth.lerp(emitter.getAppearanceInterpolation(), previousBillboardSize[1], billboardSize[1]) : billboardSize[1];
         return Math.max(0.0F, height);
     }
@@ -896,7 +919,7 @@ public class MolangParticleInstance extends SingleQuadParticle implements IMolan
         double previousY = this.y;
         double previousZ = this.z;
         moveDirectly(x, y, z);
-        if (hasPhysics && hasCollision) resolveMotionCollision(previousX, previousY, previousZ, false);
+        if (hasPhysics && hasCollision) resolveMotionCollision(previousX, previousY, previousZ);
     }
 
     public void moveSimulation(float dx, float dy, float dz) {
@@ -920,50 +943,43 @@ public class MolangParticleInstance extends SingleQuadParticle implements IMolan
                 x + collisionRadius, y + collisionRadius, z + collisionRadius));
     }
 
-    private void resolveMotionCollision(double previousX, double previousY, double previousZ, boolean firstSample) {
-        Vector3f previous = new Vector3f((float) previousX, (float) previousY, (float) previousZ);
-        Vector3f position = new Vector3f((float) x, (float) y, (float) z);
-        Vec3 origin = Vec3.ZERO;
-        if (emitter != null) {
-            toSimulationSpace(previousX, previousY, previousZ, previous);
-            toSimulationSpace(x, y, z, position);
-            if (!emitter.isParticleSimulationWorldSpace()) origin = emitter.getPosition();
-        }
-        if (firstSample) previous.zero();
-        Vec3 previousWorld = new Vec3(previous.x + (float) origin.x, previous.y + (float) origin.y,
-                previous.z + (float) origin.z);
-        Vec3 positionWorld = new Vec3(position.x + (float) origin.x, position.y + (float) origin.y,
-                position.z + (float) origin.z);
-        Vec3 velocity = new Vec3(xd / velocityTimeScale, yd / velocityTimeScale, zd / velocityTimeScale);
+    private void resolveMotionCollision(double previousX, double previousY, double previousZ) {
+        var frame = emitter.simulationFrame(1.0F);
+        var inverse = frame.inverse();
+        var storage = storesOriginOffset() ? simulationOrigin : Vec3.ZERO;
+        var originInCurrentFrame = frame.point(previousX - storage.x, previousY - storage.y, previousZ - storage.z);
+        var previousWorld = collisionWorldSample == null ? originInCurrentFrame : collisionWorldSample;
+        var positionWorld = frame.point(x - storage.x, y - storage.y, z - storage.z);
+        collisionWorldSample = positionWorld;
+        onGround = false;
+        if (inverse == null) return;
+        var carrier = particleStepSeconds > 0
+                ? originInCurrentFrame.subtract(previousWorld).scale(1.0 / particleStepSeconds) : Vec3.ZERO;
+        var localVelocity = new Vec3(xd / velocityTimeScale, yd / velocityTimeScale, zd / velocityTimeScale);
+        var velocity = frame.direction(localVelocity).add(carrier);
         float contactDrag = collisionDrag / velocityTimeScale * particleStepSeconds;
         ParticleCollision.Result result = ParticleCollision.resolve(level, previousWorld, positionWorld, velocity,
-                collisionRadius, contactDrag, coefficientOfRestitution);
-        Vector3f corrected = new Vector3f((float) result.position().x - (float) origin.x,
-                (float) result.position().y - (float) origin.y, (float) result.position().z - (float) origin.z);
-        Vec3 nextPosition = emitter == null ? result.position() : emitter.fromParticleSimulationSpace(corrected);
-        Vec3 nextVelocity = result.velocity();
-        onGround = result.collided() && result.normal().y != 0.0 && velocity.y < 0.0;
-        if (result.collided() && particleAgeNanos > 0L) {
-            if (!preset.collisionEvents.isEmpty()) {
-                float impactSpeed = Math.abs((float) velocity.x * (float) result.normal().x
-                        + (float) velocity.y * (float) result.normal().y
-                        + (float) velocity.z * (float) result.normal().z);
-                Vector3f eventVelocity = EventResolver.captureVelocity(this);
-                org.joml.Matrix3f eventBasis = EventResolver.collisionBasis(eventVelocity, result.normal());
-                for (ParticleMotionCollision.Event event : preset.collisionEvents) {
-                    if (!(event.minSpeed() <= impactSpeed)) continue;
-                    EventResolver.executeEvent(EventResolver.resolve(preset.effect.events, event.event()),
-                            this, result.position(), eventVelocity, eventBasis);
-                }
-            }
-            if (expireOnContact) {
-                particleAgeNanos = tickLifetime ? ParticleSimulationClock.nanos(tickLifetime()) : particleLifetimeNanos;
-                age = lifetimeTicks;
-            }
-        }
+                collisionRadius, contactDrag, coefficientOfRestitution, expireOnContact);
+        var contact = result.contact();
+        if (contact == null) return;
+        collisionWorldSample = result.position();
+        Vec3 nextPosition = inverse.point(result.position()).add(storage);
+        Vec3 nextVelocity = inverse.direction(result.velocity().subtract(carrier));
+        onGround = result.grounded();
         moveDirectly(nextPosition.x - x, nextPosition.y - y, nextPosition.z - z);
         setParticleSpeed(nextVelocity.x * velocityTimeScale, nextVelocity.y * velocityTimeScale,
                 nextVelocity.z * velocityTimeScale);
+        if (!preset.collisionEvents.isEmpty()) {
+            double impactSpeed = Math.abs(contact.velocity().dot(contact.normal()));
+            Vector3f eventVelocity = contact.velocity().toVector3f();
+            org.joml.Matrix3f eventBasis = EventResolver.collisionBasis(eventVelocity, contact.normal());
+            for (ParticleMotionCollision.Event event : preset.collisionEvents) {
+                if (!(event.minSpeed() <= impactSpeed)) continue;
+                EventResolver.executeEvent(EventResolver.resolve(preset.effect.events, event.event()),
+                        this, contact.point(), eventVelocity, eventBasis);
+            }
+        }
+        if (expireOnContact) remove();
     }
 
     void discardForInvalidFrame() {
@@ -1005,12 +1021,7 @@ public class MolangParticleInstance extends SingleQuadParticle implements IMolan
     protected int getLightCoords(float partialTick) {
         if (!preset.environmentLighting) return FULL_LIGHT;
         if (emitter == null) return super.getLightCoords(partialTick);
-        Vector3f position = toSimulationSpace(x, y, z, renderBasisScratch);
-        if (!emitter.isParticleSimulationWorldSpace()) {
-            Vec3 origin = emitter.getPosition();
-            position.add((float) origin.x, (float) origin.y, (float) origin.z);
-        }
-        BlockPos block = BlockPos.containing(position.x, position.y, position.z);
+        BlockPos block = BlockPos.containing(getSimulationWorldPosition());
         return level.hasChunkAt(block) ? LightCoordsUtil.getLightCoords(level, block) : FULL_LIGHT;
     }
 

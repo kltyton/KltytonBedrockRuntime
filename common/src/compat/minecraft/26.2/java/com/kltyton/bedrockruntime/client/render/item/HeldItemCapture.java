@@ -14,7 +14,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.state.ArmedEntityRenderState;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
-import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3fc;
@@ -25,11 +24,10 @@ public final class HeldItemCapture {
 
     private HeldItemCapture() { }
 
-    public static void submit(ItemStackRenderState item, PoseStack pose, SubmitNodeCollector output,
-            int light, int overlay, int outline, ArmedEntityRenderState state, HumanoidArm arm) {
+    public static void submit(ArmedEntityRenderState state, HumanoidArm arm, Runnable render) {
         Context previous = ACTIVE.get();
         ACTIVE.set(new Context(state, arm));
-        try { item.submit(pose, output, light, overlay, outline); }
+        try { render.run(); }
         finally {
             if (previous == null) { ACTIVE.remove(); } else { ACTIVE.set(previous); }
         }

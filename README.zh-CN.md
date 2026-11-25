@@ -1,4 +1,4 @@
-# Kltyton Bedrock Runtime
+# Kltyton Bedrock Runtime Lite
 
 <p align="center"><img src="icon.png" alt="Kltyton Bedrock Runtime" width="160"></p>
 
@@ -6,18 +6,24 @@
 
 面向 GeckoLib 模型几何的 Minecraft 库：提供动画图、Tree/Baked 模型声明、手写 `poly_mesh` 几何，以及由模型生成的有向包围盒（OBB）部位选择、战斗/碰撞事件、逐部位状态、模型方块形状和 GeckoLib 关键帧技能。客户端运行时还可加载带 Molang 表达式的 Bedrock 粒子定义，并渲染由原版 cube、GeckoLib 几何或 `poly_mesh` 网格驱动的模型粒子。
 
+## Lite 版
+
+此分支构建 Lite 版，包含下文列出的库 API，不含完整版的基岩附加包运行时（原样运行基岩资源包、行为包及 `.mcpack`/`.mcaddon`、Script API、附加包实体、物品、方块和世界生成）。Lite 与完整版使用相同的模组 ID、包名和 Maven 产物名，版本号以 `-lite` 结尾。Lite 与完整版二选一安装。
+
 ## 构建目标
 
 | Minecraft | 库版本 | 加载器 | Java | GeckoLib | 目标工程 |
 | --- | --- | --- | --- | --- | --- |
-| 26.2 | 0.4.1 | Fabric | 25 | 5.5.3 | [fabric-26.2](targets/fabric-26.2) |
-| 26.2 | 0.4.1 | NeoForge | 25 | 5.5.3 | [neoforge-26.2](targets/neoforge-26.2) |
-| 26.1.2 | 0.4.1 | Fabric | 25 | 5.5.2 | [fabric-26.1.2](targets/fabric-26.1.2) |
-| 26.1.2 | 0.4.1 | NeoForge | 25 | 5.5.2 | [neoforge-26.1.2](targets/neoforge-26.1.2) |
-| 1.21.1 | 0.4.1 | Fabric | 21 | 4.9.2 | [fabric-1.21.1](targets/fabric-1.21.1) |
-| 1.21.1 | 0.4.1 | NeoForge | 21 | 4.9.2 | [neoforge-1.21.1](targets/neoforge-1.21.1) |
-| 1.20.1 | 0.4.1 | Fabric | 17 | 4.8.4 | [fabric-1.20.1](targets/fabric-1.20.1) |
-| 1.20.1 | 0.4.1 | Forge | 17 | 4.8.4 | [forge-1.20.1](targets/forge-1.20.1) |
+| 26.2 | 0.4.2-lite | Fabric | 25 | 5.5.3 | [fabric-26.2](targets/fabric-26.2) |
+| 26.2 | 0.4.2-lite | NeoForge | 25 | 5.5.3 | [neoforge-26.2](targets/neoforge-26.2) |
+| 26.1.2 | 0.4.2-lite | Fabric | 25 | 5.5.2 | [fabric-26.1.2](targets/fabric-26.1.2) |
+| 26.1.2 | 0.4.2-lite | NeoForge | 25 | 5.5.2 | [neoforge-26.1.2](targets/neoforge-26.1.2) |
+| 1.21.1 | 0.4.2-lite | Fabric | 21 | 4.9.2 | [fabric-1.21.1](targets/fabric-1.21.1) |
+| 1.21.1 | 0.4.2-lite | NeoForge | 21 | 4.9.2 | [neoforge-1.21.1](targets/neoforge-1.21.1) |
+| 1.20.1 | 0.4.2-lite | Fabric | 17 | 4.8.4 | [fabric-1.20.1](targets/fabric-1.20.1) |
+| 1.20.1 | 0.4.2-lite | Forge | 17 | 4.8.4 | [forge-1.20.1](targets/forge-1.20.1) |
+
+GeckoLib 一列为最低版本，同一 Minecraft 版本的后续 GeckoLib 版本同样可用。
 
 所有目标共享 `common/src/main` 中与版本和加载器无关的代码，并从 `common/src/compat` 选取 Minecraft 与加载器适配。每个 `targets/<loader>-<minecraft>` 目录都是独立 Gradle 工程。客户端与服务端应使用匹配的 Minecraft、加载器和库构建。
 
@@ -41,7 +47,7 @@
 
 ## Maven 坐标
 
-0.4.1 使用 `com.kltyton` Maven 组。公共 API 模块为 `kltyton_bedrock_runtime-common-<minecraft>`；各加载器模块为 `kltyton_bedrock_runtime-<loader>-<minecraft>`。加载器产物是运行时模组 JAR，common 产物提供编译期 API 类型。以 NeoForge 26.2 为例：
+0.4.2-lite 使用 `com.kltyton` Maven 组。公共 API 模块为 `kltyton_bedrock_runtime-common-<minecraft>`；各加载器模块为 `kltyton_bedrock_runtime-<loader>-<minecraft>`。加载器产物是运行时模组 JAR，common 产物提供编译期 API 类型。以 NeoForge 26.2 为例：
 
 ```groovy
 repositories {
@@ -55,8 +61,8 @@ repositories {
 }
 
 dependencies {
-    compileOnly 'com.kltyton:kltyton_bedrock_runtime-common-26.2:0.4.1'
-    runtimeOnly 'com.kltyton:kltyton_bedrock_runtime-neoforge-26.2:0.4.1'
+    compileOnly 'com.kltyton:kltyton_bedrock_runtime-common-26.2:0.4.2-lite'
+    runtimeOnly 'com.kltyton:kltyton_bedrock_runtime-neoforge-26.2:0.4.2-lite'
 }
 ```
 
@@ -92,7 +98,7 @@ public void kltyton_bedrock_runtime$registerObbBones(ObbBoneRegistrar registrar)
 }
 ```
 
-请使用模型中真实的骨骼名称。`dataFactory(BASE, ...)` 选择当前注册中的基础部位；`data(...)` 作用于所有选中部位。内置玩家接入使用包含基础部位和手持物的 `HUMAN_BASE`。导入、事件和状态管理见[注册与同步 API](docs/server_sync_api.md)。
+请使用模型中真实的骨骼名称。`dataFactory(BASE, ...)` 选择当前注册中的基础部位，`data(...)` 作用于所有选中部位。需要对玩家使用包含基础部位和持物的 `HUMAN_BASE` 时，按[玩家 OBB 示例](docs/wiki/Player-OBB-Opt-In.md)显式注册。导入、事件和状态管理见[注册与同步 API](docs/server_sync_api.md)。
 
 ## 动画图
 

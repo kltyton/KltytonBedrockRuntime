@@ -1,6 +1,8 @@
 package com.kltyton.bedrockruntime.mixin.block;
 
 import com.kltyton.bedrockruntime.api.block.shape.geometry.BlockShapeCollision;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import java.util.List;
 import it.unimi.dsi.fastutil.floats.FloatArraySet;
 import it.unimi.dsi.fastutil.floats.FloatArrays;
@@ -14,29 +16,22 @@ import net.minecraft.world.phys.shapes.EntityCollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /** Adds continuous OBB resolution to the shared client/server movement path while retaining native move and step handling. */
 @Mixin(Entity.class)
 public abstract class EntityCollisionMixin {
-    @Shadow
-    private static float[] collectCandidateStepUpHeights(AABB box, List<VoxelShape> colliders, float maximum, float skipped) {
-        throw new AssertionError();
-    }
-
-    @Redirect(method = "collide", at = @At(value = "INVOKE",
+    @WrapOperation(method = "collide", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/world/entity/Entity;collectCandidateStepUpHeights(Lnet/minecraft/world/phys/AABB;Ljava/util/List;FF)[F"))
     private float[] kltyton_bedrock_runtime$useActualStepSurface(AABB box, List<VoxelShape> colliders, float maximum, float skipped,
-            Vec3 movement) {
+            Operation<float[]> original, Vec3 movement) {
         if (!BlockShapeCollision.containsCompound(colliders)) {
-            return collectCandidateStepUpHeights(box, colliders, maximum, skipped);
+            return original.call(box, colliders, maximum, skipped);
         }
         List<VoxelShape> nativeShapes = colliders.stream().filter(shape -> !(shape instanceof CompoundShape)).toList();
-        FloatArraySet heights = new FloatArraySet(collectCandidateStepUpHeights(box, nativeShapes, maximum, skipped));
+        FloatArraySet heights = new FloatArraySet(original.call(box, nativeShapes, maximum, skipped));
         AABB destination = box.move(movement.x, 0, movement.z);
         for (VoxelShape shape : colliders) {
             if (shape instanceof CompoundShape compound) {

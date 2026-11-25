@@ -51,6 +51,7 @@ def constants = new File(layout.buildDirectory.get().asFile, 'generated/sources/
 def constantFile = new File(constants, "${packageName.replace('.', '/')}/BuildInfo.java")
 def constantText = "package ${packageName};\n\npublic final class BuildInfo {\n" +
         "    public static final String MOD_ID = ${JsonOutput.toJson(identity.getProperty('mod_id'))};\n" +
+        "    public static final String MINECRAFT_VERSION = ${JsonOutput.toJson(minecraft)};\n" +
         "    private BuildInfo() {}\n}\n"
 if (!constantFile.isFile() || constantFile.getText('UTF-8') != constantText) {
     constantFile.parentFile.mkdirs()

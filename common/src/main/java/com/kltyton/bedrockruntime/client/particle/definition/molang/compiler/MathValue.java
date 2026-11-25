@@ -24,6 +24,13 @@ public interface MathValue extends ToDoubleFunction<MolangInstance> {
         return (float) value;
     }
 
+    static int arrayIndex(float requested, int size) {
+        if (size == 0) return -1;
+        long selected = requested > 0
+                ? Integer.toUnsignedLong(requested >= 0x1.0p31F ? Integer.MIN_VALUE : (int) requested) : 0L;
+        return (int) (selected % size);
+    }
+
     /**
      * Get the computed or stored value without converting it to a number.
      * <p>

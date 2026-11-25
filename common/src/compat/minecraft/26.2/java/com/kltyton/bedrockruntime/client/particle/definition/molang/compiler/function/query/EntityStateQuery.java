@@ -44,10 +44,7 @@ public final class EntityStateQuery extends MathFunction {
     public enum Kind {
         HAS_TARGET("query.has_target", EntityStateQuery::targetState),
         IS_IN_LOVE("query.is_in_love", EntityStateQuery::loveState),
-        TARGET_X_ROTATION("query.target_x_rotation", entity -> {
-            float frame = RenderFrameContext.currentOr(Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
-            return rotationLerp(frame, entity.xRotO, entity.getXRot());
-        }),
+        TARGET_X_ROTATION("query.target_x_rotation", EntityStateQuery::targetXRotation),
         TARGET_Y_ROTATION("query.target_y_rotation", EntityStateQuery::targetYRotation),
         IS_CRITICAL("query.is_critical", entity -> entity instanceof AbstractArrow arrow && arrow.isCritArrow() ? 1.0 : 0.0),
         IS_SNEEZING("query.is_sneezing", entity -> entity instanceof Panda panda && panda.isSneezing() ? 1.0 : 0.0),
@@ -107,7 +104,12 @@ public final class EntityStateQuery extends MathFunction {
         return wrapRotation(current - previous) * frame + previous;
     }
 
-    private static double targetYRotation(Entity entity) {
+    public static double targetXRotation(Entity entity) {
+        float frame = RenderFrameContext.currentOr(Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
+        return rotationLerp(frame, entity.xRotO, entity.getXRot());
+    }
+
+    public static double targetYRotation(Entity entity) {
         float frame = RenderFrameContext.currentOr(Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaPartialTick(false));
         EntityType<?> type = entity.getType();
         if (type == EntityTypes.ARROW || type == EntityTypes.FIREWORK_ROCKET || type == EntityTypes.WITHER_SKULL) {
@@ -133,7 +135,7 @@ public final class EntityStateQuery extends MathFunction {
         return Mth.clamp(wrapRotation(head - body), -85.0F, 85.0F);
     }
 
-    private static boolean isShaking(LivingEntity entity) {
+    public static boolean isShaking(LivingEntity entity) {
         if (entity instanceof Strider strider && strider.isPassenger()) {
             return strider.getVehicle() instanceof Strider vehicle && isShaking(vehicle);
         }

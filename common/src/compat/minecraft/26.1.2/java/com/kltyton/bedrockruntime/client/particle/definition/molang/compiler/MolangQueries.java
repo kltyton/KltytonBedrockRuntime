@@ -20,7 +20,12 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.animal.equine.AbstractHorse;
 import net.minecraft.world.entity.animal.equine.AbstractChestedHorse;
+import net.minecraft.world.entity.animal.equine.Horse;
+import net.minecraft.world.entity.animal.cow.MushroomCow;
+import net.minecraft.world.entity.animal.frog.Frog;
+import net.minecraft.world.entity.animal.frog.FrogVariants;
 import net.minecraft.world.entity.animal.sheep.Sheep;
+import net.minecraft.world.entity.npc.villager.Villager;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.entity.monster.Blaze;
 import net.minecraft.world.entity.monster.EnderMan;
@@ -372,6 +377,46 @@ public final class MolangQueries {
         return ((time >> 31) ^ Math.abs(time / 24000)) & 7;
     }
 
+    /** Maps the supported vanilla variants to their Bedrock query values. */
+    private static int variant(Entity entity) {
+        if (entity instanceof MushroomCow cow) return cow.getVariant() == MushroomCow.Variant.BROWN ? 1 : 0;
+        if (entity instanceof Horse horse) return horse.getVariant().getId();
+        if (entity instanceof Fox fox) return fox.getVariant().getId();
+        if (entity instanceof Parrot parrot) return parrot.getVariant().getId();
+        if (entity instanceof Axolotl axolotl) {
+            return switch (axolotl.getVariant()) {
+                case LUCY -> 0;
+                case CYAN -> 1;
+                case GOLD -> 2;
+                case WILD -> 3;
+                case BLUE -> 4;
+            };
+        }
+        if (entity instanceof Frog frog) {
+            var key = frog.getVariant().unwrapKey().orElse(null);
+            if (FrogVariants.COLD.equals(key)) return 1;
+            if (FrogVariants.WARM.equals(key)) return 2;
+        }
+        return 0;
+    }
+
+    /** Horse markings and the Bedrock biome mark of vanilla villager types. */
+    private static int markVariant(Entity entity) {
+        if (entity instanceof Horse horse) return horse.getMarkings().getId();
+        if (!(entity instanceof Villager villager)) return 0;
+        var key = villager.getVillagerData().type().unwrapKey().orElse(null);
+        if (key == null || !key.identifier().getNamespace().equals("minecraft")) return 0;
+        return switch (key.identifier().getPath()) {
+            case "desert" -> 1;
+            case "jungle" -> 2;
+            case "savanna" -> 3;
+            case "snow" -> 4;
+            case "swamp" -> 5;
+            case "taiga" -> 6;
+            default -> 0;
+        };
+    }
+
     private static void setDefaultQueryValues() {
         registerQueryVariable("query.cardinal_player_facing", p -> p.getAttachedEntity() instanceof Player player
                 ? cardinalFacing(player, false) : 6.0);
@@ -633,6 +678,8 @@ public final class MolangQueries {
                 || entity instanceof AbstractHorse horse && horse.isTamed());
         registerEntityQuery("query.is_sheared", entity -> entity instanceof Sheep sheep && sheep.isSheared()
                 || entity instanceof Bogged bogged && bogged.isSheared());
+        registerQueryVariable("query.variant", context -> variant(context.getAttachedEntity()));
+        registerQueryVariable("query.mark_variant", context -> markVariant(context.getAttachedEntity()));
         registerEntityQuery("query.blocking", entity -> entity instanceof LivingEntity living && living.isBlocking());
         registerCompatibilityQuery("query.item_is_charged", ItemChargedFunction::mainHand);
         registerCompatibilityQuery("query.is_item_equipped", ItemEquippedFunction::mainHand);

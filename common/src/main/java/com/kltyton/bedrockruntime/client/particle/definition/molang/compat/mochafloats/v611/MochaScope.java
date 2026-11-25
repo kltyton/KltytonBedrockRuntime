@@ -1,6 +1,7 @@
 package com.kltyton.bedrockruntime.client.particle.definition.molang.compat.mochafloats.v611;
 
 import com.kltyton.bedrockruntime.client.particle.api.MolangInstance;
+import com.kltyton.bedrockruntime.client.particle.definition.molang.compiler.MathValue;
 import com.kltyton.bedrockruntime.client.particle.definition.molang.compiler.value.ActorAccess;
 import com.kltyton.bedrockruntime.client.particle.definition.molang.compiler.value.EvaluationScope;
 import com.kltyton.bedrockruntime.client.particle.definition.molang.compiler.value.MolangStruct;
@@ -24,7 +25,7 @@ final class MochaScope implements ContextualScope {
     @Override
     public Value index(Value array, Value index, ExecutionContext<?> context) {
         if (!(array instanceof ArrayValue values)) return null;
-        int selected = MochaValues.arrayIndex(index.getAsNumber(), values.values().length);
+        int selected = MathValue.arrayIndex(index.getAsNumber(), values.values().length);
         return selected < 0 ? null : values.values()[selected];
     }
 
@@ -99,7 +100,7 @@ final class MochaScope implements ContextualScope {
             Target parent = target(access.array(), context);
             Value index = context.eval(access.index());
             if (parent == null || !(parent.value instanceof ArrayValue array) || array.values().length == 0) return null;
-            int offset = MochaValues.arrayIndex(index.getAsNumber(), array.values().length);
+            int offset = MathValue.arrayIndex(index.getAsNumber(), array.values().length);
             return new Target(array.values()[offset], value -> {
                 array.values()[offset] = value;
                 parent.writer.accept(array);

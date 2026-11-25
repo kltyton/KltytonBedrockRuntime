@@ -61,6 +61,13 @@ public record EnhancedModelData(String resource, long generation, Map<String, Tr
                     if (meshes.putIfAbsent(name, mesh) != null) {
                         throw new IllegalArgumentException(resource + ": duplicate mesh bone '" + name + "'");
                     }
+                } else if (bone.has("texture_meshes") && bone.get("texture_meshes").isJsonArray()
+                        && !bone.getAsJsonArray("texture_meshes").isEmpty()) {
+                    TriangleMesh mesh = BedrockMeshParser.parseTextureMeshes(resource, name,
+                            bone.getAsJsonArray("texture_meshes"), width, height);
+                    if (meshes.putIfAbsent(name, mesh) != null) {
+                        throw new IllegalArgumentException(resource + ": duplicate mesh bone '" + name + "'");
+                    }
                 }
             }
         }

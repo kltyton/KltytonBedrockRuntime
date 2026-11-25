@@ -157,6 +157,7 @@ public final class MolangFunctions {
         register("query.heightmap", HeightmapQuery::new);
         register("query.get_nearby_entities", values -> new NearbyEntitiesQuery(false, values));
         register("query.get_nearby_entities_except_self", values -> new NearbyEntitiesQuery(true, values));
+        register("query.get_root_locator_offset", RootLocatorOffsetQuery::new);
     }
 
     private MolangFunctions() {

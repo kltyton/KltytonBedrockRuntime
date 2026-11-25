@@ -13,6 +13,7 @@ import com.kltyton.bedrockruntime.client.particle.PSClientConfigs;
 import com.kltyton.bedrockruntime.client.particle.api.IMolangParticleInstance;
 import com.kltyton.bedrockruntime.client.particle.api.IParticleComponent;
 import com.kltyton.bedrockruntime.client.particle.definition.molang.MolangExp;
+import com.kltyton.bedrockruntime.client.particle.definition.molang.RenderFrameContext;
 import com.kltyton.bedrockruntime.client.particle.runtime.MolangParticleEngine;
 
 import java.util.List;
@@ -34,7 +35,7 @@ public enum ParticleAppearanceCameraDistanceFade implements IParticleComponent {
         return List.of();
     }
 
-    static boolean appliesTo(String identifier) {
+    public static boolean appliesTo(String identifier) {
         return switch (identifier) {
             case "minecraft:geyser_base", "minecraft:geyser_poof", "minecraft:geyser_plume",
                     "minecraft:noxious_gas_particle" -> true;
@@ -50,19 +51,14 @@ public enum ParticleAppearanceCameraDistanceFade implements IParticleComponent {
         Camera camera = manager != null && manager.isIndependentParticles()
                 ? manager.previewCamera() : minecraft.gameRenderer.mainCamera();
         if (camera == null) return;
-        var emitter = instance.getEmitter();
-        Vector3f position = instance.toSimulationSpace(instance.getX(), instance.getY(), instance.getZ(), new Vector3f());
-        Vec3 origin = emitter.getEmissionOrigin();
+        Vector3f position = instance.getRenderWorldPosition(new Vector3f(), RenderFrameContext.framePartialTick());
         Vec3 cameraPosition = camera.position();
-        float dx = (float) cameraPosition.x - (position.x + (float) origin.x);
-        float dy = (float) cameraPosition.y - (position.y + (float) origin.y);
-        float dz = (float) cameraPosition.z - (position.z + (float) origin.z);
-        float distance = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
-        float alpha = distance <= 0.0F ? 0.0F : distance >= 1.0F ? 1.0F : distance;
+        float fade = (float) Math.min(1, Math.sqrt(cameraPosition.distanceToSqr(position.x, position.y, position.z)));
         Float red = instance.getColorComponent(0);
         Float green = instance.getColorComponent(1);
         Float blue = instance.getColorComponent(2);
+        Float tintAlpha = instance.getColorComponent(3);
         instance.setColor(red == null ? 1.0F : red, green == null ? 1.0F : green,
-                blue == null ? 1.0F : blue, alpha);
+                blue == null ? 1.0F : blue, (tintAlpha == null ? 1.0F : tintAlpha) * fade);
     }
 }

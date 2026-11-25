@@ -4,8 +4,6 @@ import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.Vec3;
-import org.joml.Vector3f;
 import com.kltyton.bedrockruntime.client.particle.api.IMolangParticleInstance;
 import com.kltyton.bedrockruntime.client.particle.api.IParticleComponent;
 import com.kltyton.bedrockruntime.client.particle.definition.molang.MolangExp;
@@ -51,16 +49,11 @@ public final class ParticleExpireIfNotInBlocks implements IParticleComponent {
         states.addAll(resolved);
     }
 
-    private static final Vector3f POSITION = new Vector3f();
-
     @Override
     public void update(IMolangParticleInstance instance) {
         if (ids.isEmpty()) return;
         ParticleEmitter emitter = instance.getEmitter();
-        instance.toSimulationSpace(instance.getX(), instance.getY(), instance.getZ(), POSITION);
-        Vec3 origin = emitter.getEmissionOrigin();
-        POSITION.add((float) origin.x, (float) origin.y, (float) origin.z);
-        BlockPos position = BlockPos.containing(POSITION.x, POSITION.y, POSITION.z);
+        BlockPos position = BlockPos.containing(instance.getSimulationWorldPosition());
         if (!emitter.matchesExpirationBlock(states, position)) {
             instance.discard();
         }

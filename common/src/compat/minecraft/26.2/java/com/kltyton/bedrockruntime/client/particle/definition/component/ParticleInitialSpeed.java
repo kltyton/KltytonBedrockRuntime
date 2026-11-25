@@ -34,14 +34,12 @@ public record ParticleInitialSpeed(Either<FloatMolangExp, FloatMolangExp3> speed
     public void apply(IMolangParticleInstance instance) {
         speed.ifLeft(exp -> {
             var velocity = instance.getInitialSpeed();
-            float x = exp.calculate(instance);
-            float y = exp.calculate(instance);
-            float z = exp.calculate(instance);
+            float magnitude = exp.calculate(instance);
             float length = velocity.length();
             if (length < 1.0E-4F) {
                 velocity.zero();
             } else {
-                velocity.div(length).mul(x, y, z);
+                velocity.div(length).mul(magnitude);
             }
         }).ifRight(exp3 -> instance.getInitialSpeed().set(exp3.calculate(instance)));
     }

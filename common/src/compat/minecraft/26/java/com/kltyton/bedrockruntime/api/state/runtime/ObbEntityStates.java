@@ -3,7 +3,9 @@ package com.kltyton.bedrockruntime.api.state.runtime;
 
 import com.kltyton.bedrockruntime.api.entity.BoneHitboxEntity;
 import com.kltyton.bedrockruntime.api.registration.registrar.ObbBoneRegistrar;
+import com.kltyton.bedrockruntime.server.state.player.PlayerObbSavedData;
 
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
@@ -44,6 +46,9 @@ public final class ObbEntityStates {
 
     public static void save(Entity entity, ValueOutput output) {
         if (!(entity instanceof BoneHitboxEntity)) {
+            if (entity instanceof PlayerObbSavedData player && player.kbr$inactivePlayerObb() != null) {
+                output.store(SAVE_KEY, CompoundTag.CODEC, player.kbr$inactivePlayerObb().copy());
+            }
             return;
         }
         get(entity).save(output.child(SAVE_KEY));
@@ -51,6 +56,9 @@ public final class ObbEntityStates {
 
     public static void load(Entity entity, ValueInput input) {
         if (!(entity instanceof BoneHitboxEntity)) {
+            if (entity instanceof PlayerObbSavedData player) {
+                player.kbr$inactivePlayerObb(input.read(SAVE_KEY, CompoundTag.CODEC).map(CompoundTag::copy).orElse(null));
+            }
             return;
         }
         input.child(SAVE_KEY).ifPresent(get(entity)::load);

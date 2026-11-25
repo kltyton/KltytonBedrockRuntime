@@ -427,6 +427,12 @@ public final class BedrockParticleBindings {
                 JsonObject document = BedrockJson.parse(reader);
                 JsonElement header = document.get("header");
                 if (header == null || !header.isJsonObject() || !header.getAsJsonObject().has("min_engine_version")) {
+                    if (header != null && header.isJsonObject() && document.has("format_version")
+                            && document.get("format_version").isJsonPrimitive()
+                            && document.get("format_version").getAsJsonPrimitive().isNumber()
+                            && document.get("format_version").getAsInt() == 1) {
+                        return new DefinitionVersion(1, 0, 0, null);
+                    }
                     if (pack instanceof BedrockPackResources)
                         throw new IllegalArgumentException("Resource pack manifest lacks header.min_engine_version");
                     return DefinitionVersion.LATEST;

@@ -309,7 +309,11 @@ public final class BedrockTerrainSpriteSource implements SpriteSource {
             }
             String bedrockName = BedrockTerrainNames.texture(base);
             ImageResource image = bedrockName == null ? null : findImage(resources, "textures/blocks/" + bedrockName, priorities);
-            if (image == null) image = findImage(resources, "textures/blocks/" + base, priorities);
+            ImageResource literal = findImage(resources, "textures/blocks/" + base, priorities);
+            if (literal != null && (image == null || priorities.getOrDefault(literal.resource().sourcePackId(), -1)
+                    > priorities.getOrDefault(image.resource().sourcePackId(), -1))) {
+                image = literal;
+            }
             if (image == null) continue;
             if (javaPriority > priorities.getOrDefault(image.resource().sourcePackId(), -1)) continue;
             Identifier sprite = BedrockPackResources.textureSprite(image.path());
