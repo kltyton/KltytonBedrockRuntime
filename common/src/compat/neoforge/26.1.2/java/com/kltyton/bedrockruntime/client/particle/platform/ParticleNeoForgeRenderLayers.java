@@ -34,7 +34,6 @@ public final class ParticleNeoForgeRenderLayers {
                 .withLocation(BedrockParticles.asResource("pipeline/opaque_particle"))
                 .withFragmentShader(BedrockParticles.asResource("core/particle_no_discard"))
                 .withColorTargetState(opaqueColor)
-                .withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, false))
                 .build();
         SingleQuadParticle.Layer particleOpaque = new SingleQuadParticle.Layer(false, TextureAtlas.LOCATION_PARTICLES, opaque);
         SingleQuadParticle.Layer terrainOpaque = new SingleQuadParticle.Layer(false, TextureAtlas.LOCATION_BLOCKS, opaque);
@@ -44,7 +43,6 @@ public final class ParticleNeoForgeRenderLayers {
                 .withLocation(BedrockParticles.asResource("pipeline/alpha_particle"))
                 .withFragmentShader(BedrockParticles.asResource("core/particle_alpha_test"))
                 .withColorTargetState(opaqueColor)
-                .withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, false))
                 .build();
         SingleQuadParticle.Layer particleAlpha = new SingleQuadParticle.Layer(false, TextureAtlas.LOCATION_PARTICLES, alpha);
         SingleQuadParticle.Layer terrainAlpha = new SingleQuadParticle.Layer(false, TextureAtlas.LOCATION_BLOCKS, alpha);

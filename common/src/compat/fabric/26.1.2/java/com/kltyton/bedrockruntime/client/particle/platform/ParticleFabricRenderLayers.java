@@ -33,7 +33,6 @@ public final class ParticleFabricRenderLayers {
                 .withLocation(BedrockParticles.asResource("pipeline/opaque_particle"))
                 .withFragmentShader(BedrockParticles.asResource("core/particle_no_discard"))
                 .withColorTargetState(opaqueColor)
-                .withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, false))
                 .build();
         SingleQuadParticle.Layer particleOpaque = new SingleQuadParticle.Layer(false, TextureAtlas.LOCATION_PARTICLES, opaque);
         SingleQuadParticle.Layer terrainOpaque = new SingleQuadParticle.Layer(false, TextureAtlas.LOCATION_BLOCKS, opaque);
@@ -43,7 +42,6 @@ public final class ParticleFabricRenderLayers {
                 .withLocation(BedrockParticles.asResource("pipeline/alpha_particle"))
                 .withFragmentShader(BedrockParticles.asResource("core/particle_alpha_test"))
                 .withColorTargetState(opaqueColor)
-                .withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, false))
                 .build();
         SingleQuadParticle.Layer particleAlpha = new SingleQuadParticle.Layer(false, TextureAtlas.LOCATION_PARTICLES, alpha);
         SingleQuadParticle.Layer terrainAlpha = new SingleQuadParticle.Layer(false, TextureAtlas.LOCATION_BLOCKS, alpha);
@@ -53,7 +51,7 @@ public final class ParticleFabricRenderLayers {
                 .withLocation(BedrockParticles.asResource("pipeline/additive_particle"))
                 .withFragmentShader(BedrockParticles.asResource("core/particle_no_discard"))
                 .withColorTargetState(new ColorTargetState(BlendFunction.LIGHTNING))
-                .withCull(true)
+                .withCull(false)
                 .withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, false))
                 .build();
         SingleQuadParticle.Layer particleAdd = new SingleQuadParticle.Layer(true, TextureAtlas.LOCATION_PARTICLES, additive);
@@ -64,7 +62,7 @@ public final class ParticleFabricRenderLayers {
                 .withLocation(BedrockParticles.asResource("pipeline/blend_particle"))
                 .withFragmentShader(BedrockParticles.asResource("core/particle_no_discard"))
                 .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
-                .withCull(true)
+                .withCull(false)
                 .withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, false))
                 .build();
         SingleQuadParticle.Layer particleBlend = new SingleQuadParticle.Layer(true, TextureAtlas.LOCATION_PARTICLES, blend);
