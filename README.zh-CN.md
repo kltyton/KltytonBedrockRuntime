@@ -14,6 +14,8 @@
 
 | Minecraft | 库版本 | 加载器 | Java | GeckoLib | 目标工程 |
 | --- | --- | --- | --- | --- | --- |
+| 26.3 | 0.4.2-lite | Fabric | 25 | 5.5.7 | [fabric-26.3](targets/fabric-26.3) |
+| 26.3 | 0.4.2-lite | NeoForge | 25 | 5.5.7 | [neoforge-26.3](targets/neoforge-26.3) |
 | 26.2 | 0.4.2-lite | Fabric | 25 | 5.5.3 | [fabric-26.2](targets/fabric-26.2) |
 | 26.2 | 0.4.2-lite | NeoForge | 25 | 5.5.3 | [neoforge-26.2](targets/neoforge-26.2) |
 | 26.1.2 | 0.4.2-lite | Fabric | 25 | 5.5.2 | [fabric-26.1.2](targets/fabric-26.1.2) |
@@ -43,26 +45,26 @@ GeckoLib 一列为最低版本，同一 Minecraft 版本的后续 GeckoLib 版�
 
 选择匹配 Minecraft 版本和加载器的 JAR，放入需要此库的客户端与服务端 `mods/` 目录。Fabric 还需要匹配的 Fabric API 和 Forge Config API Port。所有目标都需要 GeckoLib；它是宿主依赖，不会随本库内嵌，请安装对应版本。
 
-八个目标的发行模块见[版本与 Maven 坐标指南](docs/versions/README.zh-CN.md)。构建对应目标工程可得到安装包。`-sources.jar`、`-javadoc.jar` 是开发资料，不是可安装模组。
+十个目标的发行模块见[版本与 Maven 坐标指南](docs/versions/README.zh-CN.md)。构建对应目标工程可得到安装包。`-sources.jar`、`-javadoc.jar` 是开发资料，不是可安装模组。
 
 ## Maven 坐标
 
-0.4.2-lite 使用 `com.kltyton` Maven 组。公共 API 模块为 `kltyton_bedrock_runtime-common-<minecraft>`；各加载器模块为 `kltyton_bedrock_runtime-<loader>-<minecraft>`。加载器产物是运行时模组 JAR，common 产物提供编译期 API 类型。以 NeoForge 26.2 为例：
+0.4.2-lite 使用 `com.kltyton` Maven 组。公共 API 模块为 `kltyton_bedrock_runtime-common-<minecraft>`；各加载器模块为 `kltyton_bedrock_runtime-<loader>-<minecraft>`。加载器产物是运行时模组 JAR，common 产物提供编译期 API 类型。以 NeoForge 26.3 为例：
 
 ```groovy
 repositories {
     maven {
         url = 'https://maven.sighs.cc/repository/maven-public/'
         content {
-            includeModule 'com.kltyton', 'kltyton_bedrock_runtime-common-26.2'
-            includeModule 'com.kltyton', 'kltyton_bedrock_runtime-neoforge-26.2'
+            includeModule 'com.kltyton', 'kltyton_bedrock_runtime-common-26.3'
+            includeModule 'com.kltyton', 'kltyton_bedrock_runtime-neoforge-26.3'
         }
     }
 }
 
 dependencies {
-    compileOnly 'com.kltyton:kltyton_bedrock_runtime-common-26.2:0.4.2-lite'
-    runtimeOnly 'com.kltyton:kltyton_bedrock_runtime-neoforge-26.2:0.4.2-lite'
+    compileOnly 'com.kltyton:kltyton_bedrock_runtime-common-26.3:0.4.2-lite'
+    runtimeOnly 'com.kltyton:kltyton_bedrock_runtime-neoforge-26.3:0.4.2-lite'
 }
 ```
 
@@ -70,7 +72,7 @@ dependencies {
 
 ## 实体接入
 
-26.2 中，已追踪 GeckoLib 实体在视野外仍按客户端逻辑刻推进控制器与关键帧；附近被剔除的模型通过独立延迟收集器提供碰撞几何，原版距离与视锥判断使用采集的模型边界，采样绘制任务不进入正常绘制队列。冻结实体保留动画暂停语义。其他目标版本保持原有行为。
+26.2 与 26.3 中，已追踪 GeckoLib 实体在视野外仍按客户端逻辑刻推进控制器与关键帧；附近被剔除的模型通过独立延迟收集器提供碰撞几何，原版距离与视锥判断使用采集的模型边界，采样绘制任务不进入正常绘制队列。冻结实体保留动画暂停语义。其他目标版本保持原有行为。
 
 ```mermaid
 flowchart LR
@@ -229,21 +231,21 @@ blockModelWhitelist = ["minecraft:*"]
 blockModelBlacklist = ["minecraft:chest", "minecraft:trapped_chest"]
 ```
 
-白名单仅限制范围，不会自行开启几何模式。配置位置、自动多格方块和接入示例见[方块形状](docs/block_shapes.md)。26.2 公开了 `ModelShapeCache.buildForElements(JsonArray, Direction)` 及其结果类型，供已持有模型元素的调用方复用。
+白名单仅限制范围，不会自行开启几何模式。配置位置、自动多格方块和接入示例见[方块形状](docs/block_shapes.md)。26.2 与 26.3 公开了 `ModelShapeCache.buildForElements(JsonArray, Direction)` 及其结果类型，供已持有模型元素的调用方复用。
 
 ## 构建
 
 根工程使用 KltytonTemple `3cfe9ad` 控制器。每个 `targets/<loader>-<minecraft>` 工程都有自己的 Gradle Wrapper，并声明目标 Java 工具链。单独构建一个目标时，在目标目录运行 Wrapper：
 
 ```powershell
-cd .\targets\neoforge-26.2
+cd .\targets\neoforge-26.3
 .\gradlew.bat build
 ```
 
-从仓库根目录也可通过控制器的 `build_<target>` 任务构建单个目标，或用 `buildAllTargets` 构建全部八个目标；目标名中的 `-` 和 `.` 会替换为 `_`：
+从仓库根目录也可通过控制器的 `build_<target>` 任务构建单个目标，或用 `buildAllTargets` 构建全部十个目标；目标名中的 `-` 和 `.` 会替换为 `_`：
 
 ```powershell
-.\gradlew.bat build_neoforge_26_2
+.\gradlew.bat build_neoforge_26_3
 .\gradlew.bat buildAllTargets
 ```
 

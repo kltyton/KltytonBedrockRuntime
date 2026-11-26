@@ -1,0 +1,8 @@
+plugins {
+    id 'java-library'
+    id 'net.fabricmc.fabric-loom' version "${loom_version}"
+    id 'net.neoforged.moddev' version "${moddev_version}" apply false
+    id 'me.modmuss50.mod-publish-plugin' version "${publish_plugin_version}"
+}
+apply from: file('../../gradle/target-conventions/fabric.gradle')
+apply from: file('../../gradle/target-conventions/bedrock-runtime.gradle')

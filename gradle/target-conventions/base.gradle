@@ -36,7 +36,7 @@ sourceSets {
     }
 }
 tasks.named('sourcesJar', Jar) {
-    from common.templeSourceDirectories
+    from(common.ext.has('templeSourceTrees') ? common.templeSourceTrees : common.templeSourceDirectories)
     from common.templeResourceDirectories
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }

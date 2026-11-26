@@ -39,11 +39,29 @@ def layers = [new File(commonRoot, 'src/main'),
               new File(commonRoot, "src/compat/minecraft/${family}"),
               minecraft in ['1.20.1', '1.21.1', '26.1.2'] ? new File(commonRoot, 'src/compat/minecraft/pre_26_2') : null,
               minecraft == '1.20.1' ? null : new File(commonRoot, 'src/compat/minecraft/post_1_20'),
+              minecraft == '26.3' ? new File(commonRoot, 'src/compat/minecraft/26.2') : null,
               new File(commonRoot, "src/compat/minecraft/${minecraft}"),
               new File(commonRoot, "src/compat/${loader}"),
               new File(commonRoot, "src/compat/${loader}/${family}"),
               new File(commonRoot, "src/compat/${loader}/${minecraft}")].findAll { it != null && it.isDirectory() }
 def javaDirectories = layers.collect { new File(it, 'java') }.findAll { it.isDirectory() }
+def javaSourceTrees = []
+Set<String> claimedJavaPaths = new HashSet<>()
+javaDirectories.reverse().each { File dir ->
+    Set<String> excludedForDir = new HashSet<>(claimedJavaPaths)
+    dir.eachFileRecurse { File f ->
+        if (f.isFile() && f.name.endsWith('.java')) {
+            claimedJavaPaths.add(dir.toPath().relativize(f.toPath()).toString().replace('\\', '/'))
+        }
+    }
+    javaSourceTrees.add(fileTree(dir) {
+        include '**/*.java'
+        if (!excludedForDir.isEmpty()) {
+            exclude excludedForDir
+        }
+    })
+}
+javaSourceTrees = javaSourceTrees.reverse()
 def resourceDirectories = [new File(commonRoot, "build/${targetId}/generated/resources/vanilla-models")] +
         layers.reverse().collect { new File(it, 'resources') }.findAll { it.isDirectory() }
 def packageName = identity.getProperty('mod_java_package', identity.getProperty('mod_group_id'))
@@ -59,7 +77,7 @@ if (!constantFile.isFile() || constantFile.getText('UTF-8') != constantText) {
 }
 sourceSets {
     main {
-        java.setSrcDirs(active ? javaDirectories + [constants] : [])
+        java.setSrcDirs(active ? javaDirectories.reverse() + [constants] : [])
         resources.setSrcDirs(active ? resourceDirectories : [])
     }
     test {
@@ -67,7 +85,7 @@ sourceSets {
         resources.setSrcDirs(active ? [new File(commonRoot, 'src/test/resources')] : [])
     }
 }
-tasks.named('compileJava', JavaCompile) { source javaDirectories, constants }
+tasks.named('compileJava', JavaCompile) { setSource(javaSourceTrees + [constants]) }
 tasks.named('compileTestJava', JavaCompile) { source new File(commonRoot, 'src/test/java') }
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
@@ -79,7 +97,7 @@ tasks.named('processResources', ProcessResources) {
 }
 tasks.named('processTestResources', ProcessResources) { from new File(commonRoot, 'src/test/resources') }
 tasks.named('sourcesJar', Jar) {
-    from javaDirectories
+    from javaSourceTrees
     from constants
     from resourceDirectories
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
@@ -95,6 +113,7 @@ rootProject.afterEvaluate {
 }
 ext.templeResourceDirectories = resourceDirectories
 ext.templeSourceDirectories = javaDirectories + [constants]
+ext.templeSourceTrees = javaSourceTrees + [constants]
 apply from: new File(templeRoot, 'gradle/target-conventions/ide-sources.gradle')
 
 // Loader entrypoints are merged into the installable mod, but not the common compile API.

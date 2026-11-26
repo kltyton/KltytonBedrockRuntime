@@ -97,7 +97,7 @@ def shapeProducer = project(':vanillaModels').tasks.named('generateVanillaBlockS
     owner.tasks.named('sourcesJar') { dependsOn shapeProducer }
 }
 tasks.named('javadoc', Javadoc) {
-    source common.templeSourceDirectories
+    source(common.ext.has('templeSourceTrees') ? common.templeSourceTrees : common.templeSourceDirectories)
     classpath += common.sourceSets.main.compileClasspath + common.sourceSets.main.output
     options.encoding = 'UTF-8'
     options.charSet = 'UTF-8'

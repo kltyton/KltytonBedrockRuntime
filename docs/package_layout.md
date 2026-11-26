@@ -4,7 +4,7 @@ The source tree is grouped by responsibility. Parent packages are namespaces onl
 
 ## Target and Shared Source Layout / 目标与共享源码布局
 
-The root Gradle controller is KltytonTemple `3cfe9ad`. It dispatches builds to eight independent projects under `targets/`; each project has its own Wrapper and loader metadata. Java implementation is shared from `common/src/main` and selected from `common/src/compat` for the active Minecraft family/version and loader. / 根 Gradle 控制器为 KltytonTemple `3cfe9ad`，负责向 `targets/` 下八个独立工程分派构建；每个工程有自己的 Wrapper 和加载器元数据。Java 实现位于 `common/src/main`，并按当前 Minecraft 大版本/版本和加载器从 `common/src/compat` 选取适配层。
+The root Gradle controller is KltytonTemple `3cfe9ad`. It dispatches builds to ten independent projects under `targets/`; each project has its own Wrapper and loader metadata. Java implementation is shared from `common/src/main` and selected from `common/src/compat` for the active Minecraft family/version and loader. / 根 Gradle 控制器为 KltytonTemple `3cfe9ad`，负责向 `targets/` 下十个独立工程分派构建；每个工程有自己的 Wrapper 和加载器元数据。Java 实现位于 `common/src/main`，并按当前 Minecraft 大版本/版本和加载器从 `common/src/compat` 选取适配层。
 
 ```mermaid
 flowchart TD
@@ -16,7 +16,7 @@ flowchart TD
     T --> D[target src/main/resources<br/>loader metadata and target resources]
 ```
 
-The common build selects the shared, Minecraft family/version, optional `post_1_20`, loader and loader family/version source layers for its target. GeckoLib 4 geometry/model adapters are shared from the `legacy` Minecraft family layer, so 1.20.1 and 1.21.1 do not duplicate the loader and model attachment classes. Loader metadata, plugin configuration, dependency pins, wrapper files and target-specific resources stay in the corresponding `targets/<loader>-<minecraft>` project. The target projects are Fabric and NeoForge for 26.2, 26.1.2 and 1.21.1, plus Fabric and Forge for 1.20.1. / common 构建按目标选择共享、Minecraft 大版本/具体版本、适用时的 `post_1_20`、加载器及加载器大版本/具体版本源码层。加载器元数据、插件配置、依赖版本、Wrapper 文件和目标专用资源保留在对应的 `targets/<loader>-<minecraft>` 工程中。目标组合为 26.2、26.1.2、1.21.1 的 Fabric 与 NeoForge，以及 1.20.1 的 Fabric 与 Forge。
+The common build selects the shared, Minecraft family/version, optional `post_1_20`, loader and loader family/version source layers for its target; 26.3 layers targeted RenderPearl/OIT and API overrides on top of `26.2`. GeckoLib 4 geometry/model adapters are shared from the `legacy` Minecraft family layer, so 1.20.1 and 1.21.1 do not duplicate the loader and model attachment classes. Loader metadata, plugin configuration, dependency pins, wrapper files and target-specific resources stay in the corresponding `targets/<loader>-<minecraft>` project. The target projects are Fabric and NeoForge for 26.3, 26.2, 26.1.2 and 1.21.1, plus Fabric and Forge for 1.20.1. / common 构建按目标选择共享、Minecraft 大版本/具体版本、适用时的 `post_1_20`、加载器及加载器大版本/具体版本源码层；26.3 在 `26.2` 基础上按文件叠加 RenderPearl/OIT 与 API 差异覆盖。加载器元数据、插件配置、依赖版本、Wrapper 文件和目标专用资源保留在对应的 `targets/<loader>-<minecraft>` 工程中。目标组合为 26.3、26.2、26.1.2、1.21.1 的 Fabric 与 NeoForge，以及 1.20.1 的 Fabric 与 Forge。
 
 ## Public API / 公共 API
 

@@ -14,6 +14,8 @@ This branch builds the Lite edition. It contains the library APIs listed below a
 
 | Minecraft | Library version | Loader | Java | GeckoLib | Target project |
 | --- | --- | --- | --- | --- | --- |
+| 26.3 | 0.4.2-lite | Fabric | 25 | 5.5.7 | [fabric-26.3](targets/fabric-26.3) |
+| 26.3 | 0.4.2-lite | NeoForge | 25 | 5.5.7 | [neoforge-26.3](targets/neoforge-26.3) |
 | 26.2 | 0.4.2-lite | Fabric | 25 | 5.5.3 | [fabric-26.2](targets/fabric-26.2) |
 | 26.2 | 0.4.2-lite | NeoForge | 25 | 5.5.3 | [neoforge-26.2](targets/neoforge-26.2) |
 | 26.1.2 | 0.4.2-lite | Fabric | 25 | 5.5.2 | [fabric-26.1.2](targets/fabric-26.1.2) |
@@ -43,34 +45,34 @@ All targets share the version-neutral code in `common/src/main` and select Minec
 
 Use the JAR for your Minecraft version and loader. Put it in `mods/` on both sides where the library is required. Fabric also requires its matching Fabric API and Forge Config API Port. GeckoLib is required on every target; it is a host dependency and is not embedded. Install the matching GeckoLib version for your target.
 
-The [version and Maven coordinate guide](docs/versions/README.md) lists all eight target artifacts. Build the matching target project to produce an installable JAR. Files ending in `-sources.jar` or `-javadoc.jar` are developer artifacts, not installable mods.
+The [version and Maven coordinate guide](docs/versions/README.md) lists all ten target artifacts. Build the matching target project to produce an installable JAR. Files ending in `-sources.jar` or `-javadoc.jar` are developer artifacts, not installable mods.
 
 ## Maven coordinates
 
-Version `0.4.2-lite` uses the `com.kltyton` Maven group. The common API module is `kltyton_bedrock_runtime-common-<minecraft>`; each loader module is `kltyton_bedrock_runtime-<loader>-<minecraft>`. The loader artifact is the runtime mod JAR, while the common artifact supplies compile-time API types. For NeoForge 26.2:
+Version `0.4.2-lite` uses the `com.kltyton` Maven group. The common API module is `kltyton_bedrock_runtime-common-<minecraft>`; each loader module is `kltyton_bedrock_runtime-<loader>-<minecraft>`. The loader artifact is the runtime mod JAR, while the common artifact supplies compile-time API types. For NeoForge 26.3:
 
 ```groovy
 repositories {
     maven {
         url = 'https://maven.sighs.cc/repository/maven-public/'
         content {
-            includeModule 'com.kltyton', 'kltyton_bedrock_runtime-common-26.2'
-            includeModule 'com.kltyton', 'kltyton_bedrock_runtime-neoforge-26.2'
+            includeModule 'com.kltyton', 'kltyton_bedrock_runtime-common-26.3'
+            includeModule 'com.kltyton', 'kltyton_bedrock_runtime-neoforge-26.3'
         }
     }
 }
 
 dependencies {
-    compileOnly 'com.kltyton:kltyton_bedrock_runtime-common-26.2:0.4.2-lite'
-    runtimeOnly 'com.kltyton:kltyton_bedrock_runtime-neoforge-26.2:0.4.2-lite'
+    compileOnly 'com.kltyton:kltyton_bedrock_runtime-common-26.3:0.4.2-lite'
+    runtimeOnly 'com.kltyton:kltyton_bedrock_runtime-neoforge-26.3:0.4.2-lite'
 }
 ```
 
-Replace `neoforge` and `26.2` with one of the loader/version pairs in the target table. The common API coordinate uses the same Minecraft version. These are the current `kltyton_bedrock_runtime` artifacts and the current `com.kltyton.bedrockruntime` package; the previous `bonehitboxlib-*` coordinates and `com.kltyton.bonehitboxlib` package are not provided as compatibility aliases.
+Replace `neoforge` and `26.3` with one of the loader/version pairs in the target table. The common API coordinate uses the same Minecraft version. These are the current `kltyton_bedrock_runtime` artifacts and the current `com.kltyton.bedrockruntime` package; the previous `bonehitboxlib-*` coordinates and `com.kltyton.bonehitboxlib` package are not provided as compatibility aliases.
 
 ## Entity integration
 
-In 26.2, tracked GeckoLib controllers advance on client ticks while outside the camera view, and nearby culled models provide collision geometry through a separate deferred collector. Native distance and frustum checks use the sampled model bounds; sampled draw tasks never enter the normal draw queue. Frozen entities retain their paused animation state. Other target versions keep their previous behavior.
+In 26.2 and 26.3, tracked GeckoLib controllers advance on client ticks while outside the camera view, and nearby culled models provide collision geometry through a separate deferred collector. Native distance and frustum checks use the sampled model bounds; sampled draw tasks never enter the normal draw queue. Frozen entities retain their paused animation state. Other target versions keep their previous behavior.
 
 ```mermaid
 flowchart LR
@@ -229,21 +231,21 @@ blockModelWhitelist = ["minecraft:*"]
 blockModelBlacklist = ["minecraft:chest", "minecraft:trapped_chest"]
 ```
 
-The whitelist limits scope; it does not enable a mode by itself. See [block shapes](docs/block_shapes.md) for configuration locations, automatic multi-cell blocks and integration examples. In 26.2, `ModelShapeCache.buildForElements(JsonArray, Direction)` and its result types are public for consumers that already have model elements.
+The whitelist limits scope; it does not enable a mode by itself. See [block shapes](docs/block_shapes.md) for configuration locations, automatic multi-cell blocks and integration examples. In 26.2 and 26.3, `ModelShapeCache.buildForElements(JsonArray, Direction)` and its result types are public for consumers that already have model elements.
 
 ## Building
 
 The root uses the KltytonTemple `3cfe9ad` controller. Each `targets/<loader>-<minecraft>` project has its own Gradle Wrapper and declares its Java toolchain. To build one target, run its wrapper from that directory:
 
 ```powershell
-cd .\targets\neoforge-26.2
+cd .\targets\neoforge-26.3
 .\gradlew.bat build
 ```
 
 From the repository root, the controller exposes per-target `build_<target>` tasks and `buildAllTargets`; target names replace `-` and `.` with `_`:
 
 ```powershell
-.\gradlew.bat build_neoforge_26_2
+.\gradlew.bat build_neoforge_26_3
 .\gradlew.bat buildAllTargets
 ```
 

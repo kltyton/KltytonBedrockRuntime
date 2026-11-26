@@ -14,7 +14,7 @@ def family = minecraft_version.startsWith('26.') ? '26' : 'legacy'
 def layers = [
         new File(examplesRoot, 'src/main'),
         new File(examplesRoot, "src/compat/minecraft/${family}"),
-        minecraft_version == '26.2' ? null : new File(examplesRoot, 'src/compat/minecraft/pre_26_2'),
+        minecraft_version in ['1.20.1', '1.21.1', '26.1.2'] ? new File(examplesRoot, 'src/compat/minecraft/pre_26_2') : null,
         new File(examplesRoot, "src/compat/minecraft/${minecraft_version}"),
         new File(examplesRoot, "src/compat/${loader}"),
         new File(examplesRoot, "src/compat/${loader}/${family}"),
