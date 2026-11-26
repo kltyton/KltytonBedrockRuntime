@@ -18,6 +18,7 @@
     "entity.projectile.ProjectileBoneHitboxMixin",
     "combat.projectile.ProjectileHitMixin",
     "combat.projectile.ArrowHitSweepMixin",
+    "combat.projectile.ProjectileUtilHitSweepMixin",
     "combat.projectile.EntityHitResultMixin",
     "block.EntityCollisionMixin",
     "block.ShapesMixin",

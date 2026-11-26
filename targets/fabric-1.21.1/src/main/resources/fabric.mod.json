@@ -29,7 +29,7 @@
         "fabric-key-binding-api-v1": "*",
         "minecraft": "${fabric_minecraft_version_range}",
         "java": ">=${java_version}",
-        "forgeconfigapiport": ">=${forge_config_api_port_version}",
+        "forgeconfigapiport": "${fabric_forge_config_api_port_version_range}",
         "geckolib": ">=${geckolib_version}"
     }
 }

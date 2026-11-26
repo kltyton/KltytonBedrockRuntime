@@ -21,7 +21,9 @@ dependencies {
     } else {
         compileOnly gecko
         runtimeOnly gecko
-        api "fuzs.forgeconfigapiport:forgeconfigapiport-${loader}:${forge_config_api_port_version}"
+        if (loader == 'fabric') {
+            api "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${forge_config_api_port_version}"
+        }
     }
     if (loader == 'fabric' && findProperty('fabric_rendering_v1_version')) {
         implementation "net.fabricmc.fabric-api:fabric-rendering-v1:${fabric_rendering_v1_version}"

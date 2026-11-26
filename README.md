@@ -14,16 +14,16 @@ This branch builds the Lite edition. It contains the library APIs listed below a
 
 | Minecraft | Library version | Loader | Java | GeckoLib | Target project |
 | --- | --- | --- | --- | --- | --- |
-| 26.3 | 0.4.3-lite | Fabric | 25 | 5.5.7 | [fabric-26.3](targets/fabric-26.3) |
-| 26.3 | 0.4.3-lite | NeoForge | 25 | 5.5.7 | [neoforge-26.3](targets/neoforge-26.3) |
-| 26.2 | 0.4.3-lite | Fabric | 25 | 5.5.3 | [fabric-26.2](targets/fabric-26.2) |
-| 26.2 | 0.4.3-lite | NeoForge | 25 | 5.5.3 | [neoforge-26.2](targets/neoforge-26.2) |
-| 26.1.2 | 0.4.3-lite | Fabric | 25 | 5.5.2 | [fabric-26.1.2](targets/fabric-26.1.2) |
-| 26.1.2 | 0.4.3-lite | NeoForge | 25 | 5.5.2 | [neoforge-26.1.2](targets/neoforge-26.1.2) |
-| 1.21.1 | 0.4.3-lite | Fabric | 21 | 4.9.2 | [fabric-1.21.1](targets/fabric-1.21.1) |
-| 1.21.1 | 0.4.3-lite | NeoForge | 21 | 4.9.2 | [neoforge-1.21.1](targets/neoforge-1.21.1) |
-| 1.20.1 | 0.4.3-lite | Fabric | 17 | 4.8.4 | [fabric-1.20.1](targets/fabric-1.20.1) |
-| 1.20.1 | 0.4.3-lite | Forge | 17 | 4.8.4 | [forge-1.20.1](targets/forge-1.20.1) |
+| 26.3 | 0.4.4-lite | Fabric | 25 | 5.5.7 | [fabric-26.3](targets/fabric-26.3) |
+| 26.3 | 0.4.4-lite | NeoForge | 25 | 5.5.7 | [neoforge-26.3](targets/neoforge-26.3) |
+| 26.2 | 0.4.4-lite | Fabric | 25 | 5.5.3 | [fabric-26.2](targets/fabric-26.2) |
+| 26.2 | 0.4.4-lite | NeoForge | 25 | 5.5.3 | [neoforge-26.2](targets/neoforge-26.2) |
+| 26.1.2 | 0.4.4-lite | Fabric | 25 | 5.5.2 | [fabric-26.1.2](targets/fabric-26.1.2) |
+| 26.1.2 | 0.4.4-lite | NeoForge | 25 | 5.5.2 | [neoforge-26.1.2](targets/neoforge-26.1.2) |
+| 1.21.1 | 0.4.4-lite | Fabric | 21 | 4.9.2 | [fabric-1.21.1](targets/fabric-1.21.1) |
+| 1.21.1 | 0.4.4-lite | NeoForge | 21 | 4.9.2 | [neoforge-1.21.1](targets/neoforge-1.21.1) |
+| 1.20.1 | 0.4.4-lite | Fabric | 17 | 4.8.4 | [fabric-1.20.1](targets/fabric-1.20.1) |
+| 1.20.1 | 0.4.4-lite | Forge | 17 | 4.8.4 | [forge-1.20.1](targets/forge-1.20.1) |
 
 The GeckoLib column lists the minimum version; later GeckoLib releases for the same Minecraft version are accepted.
 
@@ -49,7 +49,7 @@ The [version and Maven coordinate guide](docs/versions/README.md) lists all ten 
 
 ## Maven coordinates
 
-Version `0.4.3-lite` uses the `com.kltyton` Maven group. The common API module is `kltyton_bedrock_runtime-common-<minecraft>`; each loader module is `kltyton_bedrock_runtime-<loader>-<minecraft>`. The loader artifact is the runtime mod JAR, while the common artifact supplies compile-time API types. For NeoForge 26.3:
+Version `0.4.4-lite` uses the `com.kltyton` Maven group. The common API module is `kltyton_bedrock_runtime-common-<minecraft>`; each loader module is `kltyton_bedrock_runtime-<loader>-<minecraft>`. The loader artifact is the runtime mod JAR, while the common artifact supplies compile-time API types. For NeoForge 26.3:
 
 ```groovy
 repositories {
@@ -63,8 +63,8 @@ repositories {
 }
 
 dependencies {
-    compileOnly 'com.kltyton:kltyton_bedrock_runtime-common-26.3:0.4.3-lite'
-    runtimeOnly 'com.kltyton:kltyton_bedrock_runtime-neoforge-26.3:0.4.3-lite'
+    compileOnly 'com.kltyton:kltyton_bedrock_runtime-common-26.3:0.4.4-lite'
+    runtimeOnly 'com.kltyton:kltyton_bedrock_runtime-neoforge-26.3:0.4.4-lite'
 }
 ```
 
@@ -209,7 +209,7 @@ See [animation, model, and extension behavior](docs/animation/extensions.md#part
 
 ## Block geometry configuration
 
-Edit the loader-generated server configuration, `kltyton_bedrock_runtime-server.toml`:
+Edit the loader-generated server configuration, `kltyton_bedrock_runtime-server.toml` (or `kltyton_bedrock_runtime-synced.toml` on NeoForge 26.3):
 
 ```toml
 vanillaSlantedBlockObb = false
