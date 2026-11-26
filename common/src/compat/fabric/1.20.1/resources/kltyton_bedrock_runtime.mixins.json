@@ -17,6 +17,8 @@
     "entity.player.ServerPlayerObbSavedDataMixin",
     "entity.projectile.ProjectileBoneHitboxMixin",
     "combat.projectile.ProjectileHitMixin",
+    "combat.projectile.ArrowHitSweepMixin",
+    "combat.projectile.EntityHitResultMixin",
     "block.EntityCollisionMixin",
     "block.ShapesMixin",
     "block.BlockStateShapeMixin",

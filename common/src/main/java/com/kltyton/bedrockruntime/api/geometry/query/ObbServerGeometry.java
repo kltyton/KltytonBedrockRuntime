@@ -3,6 +3,7 @@ package com.kltyton.bedrockruntime.api.geometry.query;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 import com.kltyton.bedrockruntime.api.bone.key.ObbBoneKey;
 import com.kltyton.bedrockruntime.api.geometry.snapshot.ObbEntityGeometrySnapshot;
@@ -69,7 +70,14 @@ public final class ObbServerGeometry {
 
     /** CN: 返回射线最先命中的 OBB 部位。EN: Returns the first OBB part hit by the ray segment. */
     public static Optional<RayHit> raycast(Entity entity, Vec3 from, Vec3 to) {
+        return raycast(entity, from, to, part -> true);
+    }
+
+    /** Returns the nearest hit among the parts accepted by the caller. */
+    public static Optional<RayHit> raycast(Entity entity, Vec3 from, Vec3 to,
+            Predicate<ObbPartGeometrySnapshot> filter) {
         return parts(entity).stream()
+                .filter(filter)
                 .map(part -> new RayHit(part, part.geometry().clipDistanceSqr(from, to)))
                 .filter(hit -> Double.isFinite(hit.distanceSqr()))
                 .min(Comparator.comparingDouble(RayHit::distanceSqr));

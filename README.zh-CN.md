@@ -14,16 +14,16 @@
 
 | Minecraft | 库版本 | 加载器 | Java | GeckoLib | 目标工程 |
 | --- | --- | --- | --- | --- | --- |
-| 26.3 | 0.4.2-lite | Fabric | 25 | 5.5.7 | [fabric-26.3](targets/fabric-26.3) |
-| 26.3 | 0.4.2-lite | NeoForge | 25 | 5.5.7 | [neoforge-26.3](targets/neoforge-26.3) |
-| 26.2 | 0.4.2-lite | Fabric | 25 | 5.5.3 | [fabric-26.2](targets/fabric-26.2) |
-| 26.2 | 0.4.2-lite | NeoForge | 25 | 5.5.3 | [neoforge-26.2](targets/neoforge-26.2) |
-| 26.1.2 | 0.4.2-lite | Fabric | 25 | 5.5.2 | [fabric-26.1.2](targets/fabric-26.1.2) |
-| 26.1.2 | 0.4.2-lite | NeoForge | 25 | 5.5.2 | [neoforge-26.1.2](targets/neoforge-26.1.2) |
-| 1.21.1 | 0.4.2-lite | Fabric | 21 | 4.9.2 | [fabric-1.21.1](targets/fabric-1.21.1) |
-| 1.21.1 | 0.4.2-lite | NeoForge | 21 | 4.9.2 | [neoforge-1.21.1](targets/neoforge-1.21.1) |
-| 1.20.1 | 0.4.2-lite | Fabric | 17 | 4.8.4 | [fabric-1.20.1](targets/fabric-1.20.1) |
-| 1.20.1 | 0.4.2-lite | Forge | 17 | 4.8.4 | [forge-1.20.1](targets/forge-1.20.1) |
+| 26.3 | 0.4.3-lite | Fabric | 25 | 5.5.7 | [fabric-26.3](targets/fabric-26.3) |
+| 26.3 | 0.4.3-lite | NeoForge | 25 | 5.5.7 | [neoforge-26.3](targets/neoforge-26.3) |
+| 26.2 | 0.4.3-lite | Fabric | 25 | 5.5.3 | [fabric-26.2](targets/fabric-26.2) |
+| 26.2 | 0.4.3-lite | NeoForge | 25 | 5.5.3 | [neoforge-26.2](targets/neoforge-26.2) |
+| 26.1.2 | 0.4.3-lite | Fabric | 25 | 5.5.2 | [fabric-26.1.2](targets/fabric-26.1.2) |
+| 26.1.2 | 0.4.3-lite | NeoForge | 25 | 5.5.2 | [neoforge-26.1.2](targets/neoforge-26.1.2) |
+| 1.21.1 | 0.4.3-lite | Fabric | 21 | 4.9.2 | [fabric-1.21.1](targets/fabric-1.21.1) |
+| 1.21.1 | 0.4.3-lite | NeoForge | 21 | 4.9.2 | [neoforge-1.21.1](targets/neoforge-1.21.1) |
+| 1.20.1 | 0.4.3-lite | Fabric | 17 | 4.8.4 | [fabric-1.20.1](targets/fabric-1.20.1) |
+| 1.20.1 | 0.4.3-lite | Forge | 17 | 4.8.4 | [forge-1.20.1](targets/forge-1.20.1) |
 
 GeckoLib 一列为最低版本，同一 Minecraft 版本的后续 GeckoLib 版本同样可用。
 
@@ -49,7 +49,7 @@ GeckoLib 一列为最低版本，同一 Minecraft 版本的后续 GeckoLib 版�
 
 ## Maven 坐标
 
-0.4.2-lite 使用 `com.kltyton` Maven 组。公共 API 模块为 `kltyton_bedrock_runtime-common-<minecraft>`；各加载器模块为 `kltyton_bedrock_runtime-<loader>-<minecraft>`。加载器产物是运行时模组 JAR，common 产物提供编译期 API 类型。以 NeoForge 26.3 为例：
+0.4.3-lite 使用 `com.kltyton` Maven 组。公共 API 模块为 `kltyton_bedrock_runtime-common-<minecraft>`；各加载器模块为 `kltyton_bedrock_runtime-<loader>-<minecraft>`。加载器产物是运行时模组 JAR，common 产物提供编译期 API 类型。以 NeoForge 26.3 为例：
 
 ```groovy
 repositories {
@@ -63,8 +63,8 @@ repositories {
 }
 
 dependencies {
-    compileOnly 'com.kltyton:kltyton_bedrock_runtime-common-26.3:0.4.2-lite'
-    runtimeOnly 'com.kltyton:kltyton_bedrock_runtime-neoforge-26.3:0.4.2-lite'
+    compileOnly 'com.kltyton:kltyton_bedrock_runtime-common-26.3:0.4.3-lite'
+    runtimeOnly 'com.kltyton:kltyton_bedrock_runtime-neoforge-26.3:0.4.3-lite'
 }
 ```
 

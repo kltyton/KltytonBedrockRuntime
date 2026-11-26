@@ -194,8 +194,9 @@ public record ParticleAppearanceModel(FloatMolangExp3 size,
                                 entry -> entry.weight() == 1
                                         ? Either.left(entry.model())
                                         : Either.right(new EntryValue(entry.model(), entry.weight())));
+        // Reject an empty partial list so the outer codec can try the list-of-frames form.
         private static final Codec<ModelParticleFrame> FRAME_CODEC =
-                Codec.either(ENTRY_CODEC.listOf(), ENTRY_CODEC)
+                Codec.either(CodecCompat.list(ENTRY_CODEC, 1, Integer.MAX_VALUE), ENTRY_CODEC)
                         .xmap(either -> either.map(ModelParticleFrame::new,
                                         entry -> new ModelParticleFrame(List.of(entry))),
                                 frame -> frame.entries().size() == 1

@@ -138,14 +138,14 @@ ext.configureBedrockRuntimePom = { pom, boolean commonApi ->
         gecko.appendNode('groupId', modern ? 'com.geckolib' : 'software.bernie.geckolib')
         def geckoLoader = commonApi && modern ? 'common' : loader.toString()
         gecko.appendNode('artifactId', "geckolib-${geckoLoader}-${minecraft_version}")
-        gecko.appendNode('version', geckolib_version)
+        gecko.appendNode('version', "[${geckolib_version},)")
         gecko.appendNode('scope', 'compile')
         if (commonApi || loader != 'forge') {
             def config = dependencies.appendNode('dependency')
             config.appendNode('groupId', 'fuzs.forgeconfigapiport')
             def configModule = commonApi ? (minecraft_version == '1.20.1' ? 'common' : 'common-neoforgeapi') : loader.toString()
             config.appendNode('artifactId', "forgeconfigapiport-${configModule}")
-            config.appendNode('version', forge_config_api_port_version)
+            config.appendNode('version', "[${forge_config_api_port_version},)")
             config.appendNode('scope', 'compile')
         }
     }
